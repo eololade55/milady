@@ -880,7 +880,7 @@
 
       <!-- Preview -->
       <div class="mint-preview-box">
-        <div class="mint-nft-img" id="mint-emoji">🌸</div>
+        <div class="mint-nft-img" id="mint-preview">🌸</div>
         <div class="mint-nft-label">NEXT TO MINT</div>
         <div class="mint-nft-id">Milady <span id="mint-next-id">#????</span></div>
         <div class="mint-badges">
@@ -909,7 +909,9 @@
         <div class="qty-row">
           <label>Quantity:</label>
           <button class="qty-btn" onclick="changeQty(-1)">−</button>
-          <span class="qty-num" id="qty-display">1</span>
+          <input type="number" id="qty-display" value="1" min="1" max="100"
+            style="width:60px;font-family:'Courier New',monospace;font-size:1.1em;font-weight:bold;text-align:center;border:2px inset #ccc;background:#fff;padding:1px 4px"
+            oninput="setQty(this.value)" />
           <button class="qty-btn" onclick="changeQty(1)">+</button>
         </div>
 
@@ -1364,12 +1366,19 @@ function showPage(page) {
 }
 
 // ── Mint ─────────────────────────────────────────────────
+function setQty(val) {
+  const n = Math.min(100, Math.max(1, parseInt(val) || 1));
+  APP.mintQty = n;
+  document.getElementById('qty-display').value = n;
+  document.getElementById('total-price').textContent = (n * MINT_PRICE).toFixed(1);
+}
+
 function changeQty(d) {
-  APP.mintQty = Math.max(1, Math.min(100, APP.mintQty + d));
-  document.getElementById('qty-display').textContent = APP.mintQty;
-  document.getElementById('total-price').textContent = (APP.mintQty * MINT_PRICE).toFixed(1);
-  document.getElementById('mint-emoji').textContent  = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
-  document.getElementById('mint-next-id').textContent = '#' + String(Math.floor(Math.random()*9999)+1).padStart(4,'0');
+  setQty(APP.mintQty + d);
+  const previewId = Math.floor(Math.random() * 9999) + 1;
+  const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+  document.getElementById('mint-next-id').textContent = '#' + String(previewId).padStart(4,'0');
+  setNftImage(document.getElementById('mint-preview'), previewId, emoji, '#e0e0f0');
 }
 
 async function handleMint() {
@@ -1398,14 +1407,27 @@ async function handleMint() {
   // const tx = await contract.mint(APP.mintQty);
   // await tx.wait();
 
-  setTimeout(() => {
-    APP.mintedCount += APP.mintQty;
-    document.getElementById('mint-bar').style.width = (APP.mintedCount / TOTAL * 100) + '%';
-    document.getElementById('mint-label').textContent = APP.mintedCount.toLocaleString() + ' / 10,000 MINTED';
-    btn.disabled = false; btn.textContent = 'MINT NOW';
-    setStatus('✓ Minted ' + APP.mintQty + ' Milady' + (APP.mintQty > 1 ? 's' : '') + '! Check your wallet.');
-    document.getElementById('mint-next-id').textContent = '#' + String(APP.mintedCount + 1).padStart(4,'0');
-  }, 2000);
+const signer   = await APP.ethersProvider.getSigner();
+const pathusd  = new ethers.Contract(PATHUSD_ADDR, ERC20_ABI, signer);
+const price    = ethers.parseUnits((APP.mintQty * MINT_PRICE).toFixed(6), 6);
+
+const allowance = await pathusd.allowance(APP.walletAddress, NFT_CONTRACT);
+if (BigInt(allowance) < BigInt(price)) {
+  btn.textContent = 'APPROVING...';
+  await (await pathusd.approve(NFT_CONTRACT, price)).wait();
+}
+
+btn.textContent = 'CONFIRM IN WALLET...';
+const contract = new ethers.Contract(NFT_CONTRACT, ['function mint(uint256 qty) external'], signer);
+const tx = await contract.mint(APP.mintQty);
+btn.textContent = 'CONFIRMING...';
+await tx.wait();
+
+APP.mintedCount += APP.mintQty;
+document.getElementById('mint-bar').style.width = (APP.mintedCount / TOTAL * 100) + '%';
+document.getElementById('mint-label').textContent = APP.mintedCount.toLocaleString() + ' / 10,000 MINTED';
+btn.disabled = false; btn.textContent = 'MINT NOW';
+setStatus('✓ Minted ' + APP.mintQty + ' Milady' + (APP.mintQty > 1 ? 's' : '') + '! Check your wallet.');
 }
 
 // ── Marketplace ──────────────────────────────────────────
