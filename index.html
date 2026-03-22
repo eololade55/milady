@@ -35,7 +35,6 @@
       padding: 0.5em 1em 2em;
     }
 
-    /* ---- NAV ---- */
     .top-nav {
       background: #c0c0c0;
       border-bottom: 2px solid #808080;
@@ -80,11 +79,9 @@
 
     .nav-wallet:hover { background: #3a4e1a; }
 
-    /* ---- PAGES ---- */
     .page { display: none; }
     .page.active { display: block; }
 
-    /* ---- BOXES ---- */
     .m_box { border: 2px solid #000; margin: 1em 0; background: #ffffee; }
     .m_box_red { border: 2px solid #000; margin: 1em 0; background: #fff0f0; }
     .box { border: 2px solid #000; margin: 1em 0; background: #fff; }
@@ -98,7 +95,6 @@
 
     .box_inner { padding: 0.5em 0.8em; }
 
-    /* ---- GALLERY ---- */
     .gallery_container {
       display: flex;
       flex-wrap: wrap;
@@ -115,25 +111,12 @@
       width: 110px;
     }
 
-    .fake-img {
-      width: 100px;
-      height: 100px;
-      background: #eee;
-      border: 1px solid #ccc;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.5em;
-      margin: 0 auto;
-    }
-
     .gallery_item .desc {
       font-size: 12px;
       font-weight: bold;
       margin-top: 4px;
     }
 
-    /* ---- DRIP ---- */
     .drip-row {
       display: flex;
       gap: 8px;
@@ -161,7 +144,6 @@
     .drip-S { color: #cc7700; border-color: #cc7700; background: #fffce0; }
     .drip-SS { color: #cc0000; border-color: #cc0000; background: #fff0f0; font-size: 1.3em; }
 
-    /* ---- ROADMAP ---- */
     .roadmap-item {
       display: flex;
       gap: 10px;
@@ -183,7 +165,6 @@
       margin-top: 2px;
     }
 
-    /* ---- MINT ---- */
     .mint-banner {
       text-align: center;
       font-size: 1.4em;
@@ -308,14 +289,6 @@
 
     .qty-btn:active { border: 2px inset #fff; }
 
-    .qty-num {
-      font-family: "Courier New", monospace;
-      font-size: 1.1em;
-      font-weight: bold;
-      min-width: 24px;
-      text-align: center;
-    }
-
     .mint-total-row {
       background: #ffffcc;
       border: 1px solid #999;
@@ -356,7 +329,6 @@
       font-style: italic;
     }
 
-    /* ---- MARKET ---- */
     .mkt-stats-table {
       border-collapse: collapse;
       width: 100%;
@@ -529,7 +501,6 @@
     .type-sale { color: #007700; font-weight: bold; }
     .type-list { color: #0000cc; font-weight: bold; }
 
-    /* ---- MODALS ---- */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -596,25 +567,6 @@
       background: #fff;
     }
 
-    .wallet-opt {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: #fff;
-      border: 2px outset #ccc;
-      padding: 6px 10px;
-      cursor: pointer;
-      margin-bottom: 6px;
-      font-size: 13px;
-      font-weight: bold;
-      width: 100%;
-      text-align: left;
-    }
-
-    .wallet-opt:hover { background: #fffff0; border-color: #4a5e2a; }
-    .wallet-opt:active { border: 2px inset #ccc; }
-
-    /* ---- STATUS BAR ---- */
     .status-bar {
       position: fixed;
       bottom: 0;
@@ -651,18 +603,6 @@
       margin: 0.5em 2em;
     }
 
-    .fake-img-lg {
-      width: 260px;
-      height: 180px;
-      background: #e8e8f0;
-      border: 1px solid #ccc;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 5em;
-      margin: 0 auto;
-    }
-
     .audio-wrap { text-align: center; padding: 0.5em 0; }
     audio { width: 60%; max-width: 400px; }
 
@@ -676,7 +616,6 @@
 </head>
 <body>
 
-<!-- TOP NAV BAR -->
 <div class="top-nav">
   <span class="top-nav-brand">⊡ TEMPO MILADY</span>
   <button class="nav-btn active" id="nav-home" onclick="showPage('home')">HOME</button>
@@ -687,10 +626,6 @@
   <button class="nav-btn nav-wallet" id="wallet-btn" onclick="openWalletModal()">CONNECT WALLET</button>
 </div>
 
-
-<!-- ==============================================
-     HOME PAGE
-============================================== -->
 <div class="page active" id="page-home">
 <div class="page-wrap">
 
@@ -855,12 +790,8 @@
   </div>
 
 </div>
-</div><!-- /page-home -->
+</div>
 
-
-<!-- ==============================================
-     MINT PAGE
-============================================== -->
 <div class="page" id="page-mint">
 <div class="page-wrap">
 
@@ -937,12 +868,8 @@
   </div>
 
 </div>
-</div><!-- /page-mint -->
+</div>
 
-
-<!-- ==============================================
-     MARKET PAGE
-============================================== -->
 <div class="page" id="page-market">
 <div class="page-wrap">
 
@@ -1060,10 +987,8 @@
   <p style="text-align:center;font-size:11px;color:#888">TEMPO MILADY MARKET — FULLY ON-CHAIN P2P — TEMPO CHAIN © 2026</p>
 
 </div>
-</div><!-- /page-market -->
+</div>
 
-
-<!-- ====== MAKE OFFER MODAL ====== -->
 <div class="modal-overlay" id="offer-modal">
   <div class="modal-win">
     <div class="modal-title-bar">💬 Make Offer <button class="modal-x" onclick="closeModal('offer-modal')">✕</button></div>
@@ -1087,13 +1012,20 @@
   </div>
 </div>
 
-<!-- ====== LIST NFT MODAL ====== -->
 <div class="modal-overlay" id="list-modal">
   <div class="modal-win">
     <div class="modal-title-bar">📋 List Your Milady <button class="modal-x" onclick="closeModal('list-modal')">✕</button></div>
     <div class="modal-body">
-      <label class="modal-lbl">Milady Token ID (1–10000)</label>
-      <input class="modal-input" type="number" id="list-id" placeholder="e.g. 4291" min="1" max="10000" />
+      <label class="modal-lbl">Select Your Milady</label>
+      <select class="modal-input" id="list-id" style="font-family:'Courier New',monospace">
+        <option value="">Loading your NFTs...</option>
+      </select>
+
+      <div id="list-preview-wrap" style="margin-top:10px;text-align:center;background:#f5f5f5;border:1px solid #ccc;padding:8px">
+        <div id="list-preview-img" style="width:120px;height:120px;margin:0 auto;background:#eee;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:2em;overflow:hidden">🌸</div>
+        <div id="list-preview-label" style="margin-top:6px;font-family:'Courier New',monospace;font-size:12px;color:#555">No NFT selected</div>
+      </div>
+
       <label class="modal-lbl">Price (pathUSD)</label>
       <input class="modal-input" type="number" id="list-price" placeholder="e.g. 10" min="0.01" step="0.01" />
       <br /><br />
@@ -1102,7 +1034,6 @@
   </div>
 </div>
 
-<!-- ====== SWEEP MODAL ====== -->
 <div class="modal-overlay" id="sweep-modal">
   <div class="modal-win">
     <div class="modal-title-bar">🧹 Sweep Floor <button class="modal-x" onclick="closeModal('sweep-modal')">✕</button></div>
@@ -1119,8 +1050,6 @@
   </div>
 </div>
 
-
-<!-- ====== WALLET MODAL (AGENT-style EIP-6963) ====== -->
 <div class="wallet-overlay" id="wallet-overlay" onclick="handleOverlayClick(event)">
   <div class="wallet-modal-win">
     <div class="wallet-modal-header">
@@ -1133,25 +1062,6 @@
   </div>
 </div>
 
-
-<!-- SWEEP MODAL -->
-<div class="modal-overlay" id="sweep-modal">
-  <div class="modal-win">
-    <div class="modal-title-bar">🧹 Sweep Floor <button class="modal-x" onclick="closeModal('sweep-modal')">✕</button></div>
-    <div class="modal-body">
-      <p style="font-size:12px;margin-bottom:0.7em">Buy multiple floor-priced Miladys in one gas-optimized transaction. Max 20 per sweep.</p>
-      <label class="modal-lbl">Number to sweep (max 20)</label>
-      <input class="modal-input" type="number" id="sweep-count" placeholder="e.g. 5" min="1" max="20" />
-      <div id="sweep-info" style="font-family:'Courier New',monospace;font-size:12px;background:#ffffcc;border:1px solid #ccc;padding:4px 8px;margin-top:8px">
-        FLOOR: — USD &nbsp; | &nbsp; TOTAL: — USD
-      </div>
-      <br />
-      <button class="btn-mint" onclick="executeSweep()">EXECUTE SWEEP</button>
-    </div>
-  </div>
-</div>
-
-<!-- STATUS BAR -->
 <div class="status-bar">
   <div class="led off" id="led"></div>
   <span id="status-text">Not connected — Click CONNECT WALLET to begin</span>
@@ -1220,9 +1130,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 
 <script>
-// ═══════════════════════════════════════════════════════
-// TEMPO MILADY — CONFIG
-// ═══════════════════════════════════════════════════════
 const NFT_CONTRACT     = '0xef867e3cB2d3B79FC300c7E08DC12FA68a39Ae9A';
 const MARKET_CONTRACT  = '0x476fAC9189bc92C7451dfD86737DAf9326b96014';
 const PATHUSD_ADDR     = '0x20c0000000000000000000000000000000000000';
@@ -1429,6 +1336,7 @@ async function connectWithProvider(provider) {
 
     updateWalletUI();
     await refreshMarketplace();
+    await loadMyNFTs();
   } catch (e) {
     setStatus('⚠ ' + (e.code === 4001 ? 'Connection rejected' : (e.message || 'Connection failed')));
   }
@@ -1450,6 +1358,7 @@ function disconnectWallet() {
   APP.activeProvider = null;
   APP.ethersProvider = null;
   APP.myNFTs = [];
+  renderListableNFTOptions();
   updateWalletUI();
 }
 
@@ -1516,7 +1425,8 @@ async function handleMint() {
   }
 
   const btn = document.getElementById('mint-btn');
-  btn.disabled = true; btn.textContent = 'MINTING...';
+  btn.disabled = true;
+  btn.textContent = 'MINTING...';
   setStatus('Waiting for wallet confirmation...');
 
   try {
@@ -1539,16 +1449,17 @@ async function handleMint() {
     APP.mintedCount += APP.mintQty;
     document.getElementById('mint-bar').style.width = (APP.mintedCount / TOTAL * 100) + '%';
     document.getElementById('mint-label').textContent = APP.mintedCount.toLocaleString() + ' / 10,000 MINTED';
-    btn.disabled = false; btn.textContent = 'MINT NOW';
+    btn.disabled = false;
+    btn.textContent = 'MINT NOW';
     setStatus('✓ Minted ' + APP.mintQty + ' Milady' + (APP.mintQty > 1 ? 's' : '') + '! Check your wallet.');
     await loadMyNFTs();
   } catch (e) {
-    btn.disabled = false; btn.textContent = 'MINT NOW';
+    btn.disabled = false;
+    btn.textContent = 'MINT NOW';
     setStatus('⚠ ' + (e.reason || e.shortMessage || e.message || 'Mint failed'));
   }
 }
 
-// ── Market helpers ─────────────────────────────────────
 function formatUnits6(v) {
   return Number(ethers.formatUnits(v, 6));
 }
@@ -1611,6 +1522,8 @@ async function refreshMarketplace() {
     });
 
     updateMarketStats();
+    renderListableNFTOptions();
+
     if (APP.currentTab === 'listed') renderGrid('listed');
     if (APP.currentTab === 'mine') loadMyNFTs();
     if (APP.currentTab === 'offers') loadOffers();
@@ -1643,7 +1556,7 @@ function switchTab(tab, el) {
   }
 }
 
-function renderGrid(tab) {
+function renderGrid() {
   const c = document.getElementById('market-content');
   const L = APP.listings;
   if (!L.length) {
@@ -1679,7 +1592,7 @@ function sortListings(val) {
   if (val === 'price-desc') L.sort((a,b)=>b.price-a.price);
   if (val === 'id-asc')     L.sort((a,b)=>a.id-b.id);
   if (val === 'drip')       L.sort((a,b)=>b.drip-a.drip);
-  renderGrid(APP.currentTab);
+  renderGrid();
 }
 
 async function buyNFT(id) {
@@ -1708,15 +1621,79 @@ async function buyNFT(id) {
   }
 }
 
-function openList() {
+async function openList() {
   if (!requireWallet()) return;
+  await loadMyNFTs();
+  renderListableNFTOptions();
   document.getElementById('list-modal').classList.add('open');
 }
 
-function openListFromNFT(id) {
-  document.getElementById('list-id').value = id;
+async function openListFromNFT(id) {
+  await loadMyNFTs();
+  renderListableNFTOptions();
   document.getElementById('list-modal').classList.add('open');
+
+  const select = document.getElementById('list-id');
+  if (select) {
+    select.value = String(id);
+    updateListPreview(String(id));
+  }
 }
+
+function renderListableNFTOptions() {
+  const select = document.getElementById('list-id');
+  if (!select) return;
+
+  if (!APP.walletAddress) {
+    select.innerHTML = '<option value="">Connect wallet first</option>';
+    updateListPreview('');
+    return;
+  }
+
+  const listedIds = new Set(APP.listings.map(l => Number(l.id)));
+  const listable = (APP.myNFTs || []).filter(id => !listedIds.has(Number(id)));
+
+  if (!listable.length) {
+    select.innerHTML = '<option value="">No unlisted Miladys available</option>';
+    updateListPreview('');
+    return;
+  }
+
+  select.innerHTML =
+    '<option value="">Select a Milady...</option>' +
+    listable.map(id => `<option value="${id}">Milady #${String(id).padStart(4,'0')}</option>`).join('');
+
+  if (listable.length === 1) {
+    select.value = String(listable[0]);
+    updateListPreview(String(listable[0]));
+  } else {
+    updateListPreview('');
+  }
+}
+
+function updateListPreview(tokenId) {
+  const imgWrap = document.getElementById('list-preview-img');
+  const label = document.getElementById('list-preview-label');
+  if (!imgWrap || !label) return;
+
+  if (!tokenId) {
+    imgWrap.innerHTML = '🌸';
+    imgWrap.style.padding = '';
+    label.textContent = 'No NFT selected';
+    return;
+  }
+
+  const idNum = Number(tokenId);
+  const emoji = EMOJIS[idNum % EMOJIS.length];
+  label.textContent = 'Milady #' + String(idNum).padStart(4, '0');
+  setNftImage(imgWrap, idNum, emoji, '#eee');
+}
+
+document.addEventListener('change', (e) => {
+  if (e.target && e.target.id === 'list-id') {
+    updateListPreview(e.target.value);
+  }
+});
 
 async function submitListing() {
   if (!requireWallet()) return;
@@ -1724,8 +1701,13 @@ async function submitListing() {
   const id = parseInt(document.getElementById('list-id').value);
   const price = parseFloat(document.getElementById('list-price').value);
 
-  if (!id || !price || price <= 0 || id < 1 || id > 10000) {
-    setStatus('⚠ Enter a valid Token ID (1–10000) and price');
+  if (!id || id < 1 || id > 10000) {
+    setStatus('⚠ Select one of your Miladys');
+    return;
+  }
+
+  if (!price || price <= 0) {
+    setStatus('⚠ Enter a valid price');
     return;
   }
 
@@ -1741,10 +1723,13 @@ async function submitListing() {
     await tx.wait();
 
     closeModal('list-modal');
-    document.getElementById('list-id').value = '';
     document.getElementById('list-price').value = '';
+    document.getElementById('list-id').innerHTML = '<option value="">Loading your NFTs...</option>';
+    updateListPreview('');
 
     await refreshMarketplace();
+    await loadMyNFTs();
+
     setStatus('✓ Listed Milady #' + String(id).padStart(4,'0') + ' for ' + price + ' pathUSD');
     addActivity('Milady #' + String(id).padStart(4,'0'), price, 'LISTED');
   } catch (e) {
@@ -1827,7 +1812,7 @@ function updateMarketStats() {
 function addActivity(token, price, type) {
   const tbody = document.getElementById('activity-rows');
   const row = document.createElement('tr');
-  const cls = type === 'SALE' ? 'type-sale' : type === 'OFFER' ? 'type-list' : 'type-list';
+  const cls = type === 'SALE' ? 'type-sale' : 'type-list';
   row.innerHTML = `<td>🌸</td><td>${token}</td><td>${price} USD</td><td class="${cls}">${type}</td><td>just now</td>`;
   tbody.insertBefore(row, tbody.firstChild);
 }
@@ -1836,12 +1821,14 @@ async function loadMyNFTs() {
   const grid = document.getElementById('my-nfts-grid');
   if (!APP.walletAddress) {
     grid.innerHTML = '<div class="empty-box">Connect your wallet to see your Miladys.</div>';
+    renderListableNFTOptions();
     return;
   }
   grid.innerHTML = '<div class="empty-box">Loading your Miladys...</div>';
 
   if (!NFT_CONTRACT) {
     grid.innerHTML = '<div class="empty-box">Contract not deployed yet — your NFTs will appear here after mint.</div>';
+    renderListableNFTOptions();
     return;
   }
 
@@ -1854,6 +1841,7 @@ async function loadMyNFTs() {
     const balance = Number(await contract.balanceOf(APP.walletAddress));
     if (balance === 0) {
       APP.myNFTs = [];
+      renderListableNFTOptions();
       grid.innerHTML = '<div class="empty-box">You don\'t own any Miladys yet. Mint one to get started!</div>';
       return;
     }
@@ -1864,6 +1852,7 @@ async function loadMyNFTs() {
       )
     );
     APP.myNFTs = ids;
+    renderListableNFTOptions();
 
     grid.innerHTML = '<div class="nft-grid">' + ids.map(id => {
       const emoji = EMOJIS[id % EMOJIS.length];
@@ -1906,7 +1895,8 @@ async function loadMyNFTs() {
 async function fetchMintedCount() {
   if (!NFT_CONTRACT || !APP.ethersProvider) return;
   try {
-    const contract = new ethers.Contract(NFT_CONTRACT,
+    const contract = new ethers.Contract(
+      NFT_CONTRACT,
       ['function totalSupply() view returns (uint256)'],
       APP.ethersProvider
     );
@@ -1915,12 +1905,6 @@ async function fetchMintedCount() {
     const pct = (supply / TOTAL * 100).toFixed(1);
     document.getElementById('mint-bar').style.width = pct + '%';
     document.getElementById('mint-label').textContent = supply.toLocaleString() + ' / 10,000 MINTED';
-    if (document.getElementById('mint-minted-num'))
-      document.getElementById('mint-minted-num').textContent = supply.toLocaleString();
-    if (document.getElementById('mint-remaining'))
-      document.getElementById('mint-remaining').textContent = (TOTAL - supply).toLocaleString();
-    if (document.getElementById('mint-pct'))
-      document.getElementById('mint-pct').textContent = pct + '%';
   } catch {}
 }
 
@@ -2095,7 +2079,9 @@ async function cancelOffer(tokenId) {
   }
 }
 
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.modal-overlay').forEach(m =>
@@ -2103,7 +2089,9 @@ document.addEventListener('DOMContentLoaded', () => {
   );
 });
 
-function setStatus(msg) { document.getElementById('status-text').textContent = msg; }
+function setStatus(msg) {
+  document.getElementById('status-text').textContent = msg;
+}
 
 window.addEventListener('load', () => {
   setTimeout(() => window.dispatchEvent(new Event('eip6963:requestProvider')), 500);
@@ -2114,7 +2102,7 @@ window.addEventListener('load', () => {
     const eth = window.ethereum;
     if (!eth) {
       updateWalletUI();
-      renderGrid('listed');
+      renderGrid();
       return;
     }
     try {
@@ -2135,7 +2123,7 @@ window.addEventListener('load', () => {
   }, 800);
 
   updateWalletUI();
-  renderGrid('listed');
+  renderGrid();
 });
 </script>
 </body>
