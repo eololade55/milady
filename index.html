@@ -1146,7 +1146,6 @@
 </div>
 
 
-
 <!-- SWEEP MODAL -->
 <div class="modal-overlay" id="sweep-modal">
   <div class="modal-win">
@@ -1759,23 +1758,42 @@ async function loadMyNFTs() {
     }).join('') + '</div>';
 
     ids.forEach(id => {
-  const el = document.getElementById('my-nft-img-' + id);
-  if (!el) return;
-  el.innerHTML = '';
-  el.style.padding = '0';
-  const img = document.createElement('img');
-  img.src = `https://tempomilady.xyz/pngs/${id}.png`;
-  img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
-  img.onerror = () => { el.style.padding = ''; el.textContent = EMOJIS[id % EMOJIS.length]; };
-  el.appendChild(img);
-});
+      const el = document.getElementById('my-nft-img-' + id);
+      if (!el) return;
+      el.innerHTML = '';
+      el.style.padding = '0';
+      const img = document.createElement('img');
+      img.src = `https://tempomilady.xyz/pngs/${id}.png`;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+      img.onerror = () => { el.style.padding = ''; el.textContent = EMOJIS[id % EMOJIS.length]; };
+      el.appendChild(img);
+    });
 
     setStatus('Found ' + balance + ' Milady' + (balance > 1 ? 's' : '') + ' in your wallet');
   } catch (e) {
     grid.innerHTML = '<div class="empty-box">⚠ Could not load NFTs: ' + (e.message || 'unknown error') + '</div>';
   }
 }
-
+async function fetchMintedCount() {
+  if (!NFT_CONTRACT || !APP.ethersProvider) return;
+  try {
+    const contract = new ethers.Contract(NFT_CONTRACT,
+      ['function totalSupply() view returns (uint256)'],
+      APP.ethersProvider
+    );
+    const supply = Number(await contract.totalSupply());
+    APP.mintedCount = supply;
+    const pct = (supply / TOTAL * 100).toFixed(1);
+    document.getElementById('mint-bar').style.width = pct + '%';
+    document.getElementById('mint-label').textContent = supply.toLocaleString() + ' / 10,000 MINTED';
+    if (document.getElementById('mint-minted-num'))
+      document.getElementById('mint-minted-num').textContent = supply.toLocaleString();
+    if (document.getElementById('mint-remaining'))
+      document.getElementById('mint-remaining').textContent = (TOTAL - supply).toLocaleString();
+    if (document.getElementById('mint-pct'))
+      document.getElementById('mint-pct').textContent = pct + '%';
+  } catch {}
+}
 // ── Make Offer ────────────────────────────────────────────
 let offerTargetId = null;
 
@@ -1898,6 +1916,8 @@ function setStatus(msg) { document.getElementById('status-text').textContent = m
 window.addEventListener('load', () => {
   // Retry EIP-6963 after short delay for late-injecting wallets
   setTimeout(() => window.dispatchEvent(new Event('eip6963:requestProvider')), 500);
+  fetchMintedCount();
+  setInterval(fetchMintedCount, 30000); // refresh every 30 seconds
 
   // Auto-reconnect if previously authorised
   setTimeout(async () => {
