@@ -687,7 +687,7 @@
   <button class="nav-btn active" id="nav-home" onclick="showPage('home')">HOME</button>
   <button class="nav-btn" id="nav-mint" onclick="showPage('mint')">MINT</button>
   <button class="nav-btn" id="nav-market" onclick="showPage('market')">MARKET</button>
-  <a class="nav-a" href="https://twitter.com" target="_blank">TWITTER</a>
+  <a class="nav-a" href="https://x.com/TempoMilady" target="_blank">X</a>
   <a class="nav-a" href="https://discord.com" target="_blank">DISCORD</a>
   <button class="nav-btn nav-wallet" id="wallet-btn" onclick="openWalletModal()">CONNECT WALLET</button>
 </div>
@@ -724,7 +724,7 @@
 
   <p style="text-align:center">
     <a href="https://discord.gg/" target="_blank">Tempo Milady Community Discord</a> |
-    <a href="https://twitter.com/" target="_blank">Tempo Milady Official Twitter</a>
+    <a href="https://x.com/TempoMilady" target="_blank">Tempo Milady Official X</a>
   </p>
 
   <!-- Collection Box -->
@@ -858,7 +858,7 @@
       <hr />
       <p style="text-align:center">
         <a href="https://discord.gg/" target="_blank">Community Discord</a> |
-        <a href="https://twitter.com/" target="_blank">Official Twitter</a> |
+        <a href="https://x.com/TempoMilady" target="_blank">Official X</a> |
         <a href="#" target="_blank">Contract</a>
       </p>
       <hr />
@@ -1866,7 +1866,6 @@ async function populateListModal(preselect) {
   document.getElementById('list-nft-preview').style.display = 'none';
 
   try {
-    // Use cached myNFTs if available, else fetch
     let ids = APP.myNFTs;
     if (!ids || !ids.length) {
       const nft     = new ethers.Contract(NFT_CONTRACT, NFT_ABI, APP.ethersProvider);
@@ -1883,20 +1882,22 @@ async function populateListModal(preselect) {
       APP.myNFTs = ids;
     }
 
-    const listedIds = new Set(APP.listings.map(l => l.id));
-    // Filter out already listed
-    const unlisted = ids.filter(id => !listedIds.has(id));
-
-    if (!unlisted.length) {
-      sel.innerHTML = '<option value="">All your Miladys are already listed</option>';
+    if (!ids.length) {
+      sel.innerHTML = '<option value="">You don\'t own any Miladys</option>';
       return;
     }
 
-    sel.innerHTML = unlisted.map(id =>
-      `<option value="${id}"${preselect === id ? ' selected' : ''}>Milady #${String(id).padStart(4,'0')}</option>`
-    ).join('');
+    const listedIds = new Set(APP.listings.map(l => l.id));
 
-    // Show preview of selected token
+    // Always show all owned NFTs — mark listed ones
+    sel.innerHTML = '<option value="">— Select a Milady —</option>' +
+      ids.map(id => {
+        const isListed = listedIds.has(id);
+        const label    = 'Milady #' + String(id).padStart(4,'0') + (isListed ? ' (listed)' : '');
+        const sel_attr = (preselect === id) ? ' selected' : '';
+        return `<option value="${id}"${sel_attr}>${label}</option>`;
+      }).join('');
+
     updateListPreview();
     sel.onchange = updateListPreview;
   } catch (e) {
@@ -2161,8 +2162,9 @@ let offerTargetId = null;
 function openOfferModal(id, currentPrice) {
   if (!requireWallet()) return;
   offerTargetId = id;
+  const priceStr = currentPrice > 0 ? currentPrice + ' pathUSD' : 'Not listed';
   document.getElementById('offer-token-info').textContent =
-    'Milady #' + String(id).padStart(4,'0') + '  |  Listed at: ' + currentPrice + ' pathUSD';
+    'Milady #' + String(id).padStart(4,'0') + '  |  ' + priceStr;
   document.getElementById('offer-price').value = '';
   document.getElementById('offer-modal').classList.add('open');
 }
@@ -2183,8 +2185,34 @@ async function submitOffer() {
       setStatus('Approving pathUSD...');
       await (await pathusd.approve(MARKET_CONTRACT, priceWei)).wait();
     }
+
     setStatus('Confirm offer in wallet...');
-    await (await market.makeOffer(offerTargetId, priceWei, expiry * 86400)).wait();
+
+    // Try makeOffer with 2 params first (tokenId, price)
+    // If contract uses 3 params (tokenId, price, duration) it will try that
+    // If contract uses expiry timestamp instead of duration, it tries that too
+    let tx;
+    const durationSecs   = expiry * 86400;
+    const expiryTimestamp = Math.floor(Date.now() / 1000) + durationSecs;
+
+    try {
+      // Try 2-param version first: makeOffer(tokenId, price)
+      const market2 = new ethers.Contract(MARKET_CONTRACT,
+        ['function makeOffer(uint256 tokenId, uint256 price) external'], signer);
+      tx = await market2.makeOffer(offerTargetId, priceWei);
+    } catch {
+      try {
+        // Try 3-param with duration: makeOffer(tokenId, price, duration)
+        tx = await market.makeOffer(offerTargetId, priceWei, durationSecs);
+      } catch {
+        // Try 3-param with expiry timestamp: makeOffer(tokenId, price, expiryTimestamp)
+        const market3 = new ethers.Contract(MARKET_CONTRACT,
+          ['function makeOffer(uint256 tokenId, uint256 price, uint256 expiry) external'], signer);
+        tx = await market3.makeOffer(offerTargetId, priceWei, expiryTimestamp);
+      }
+    }
+
+    await tx.wait();
     closeModal('offer-modal');
     setStatus('✓ Offer of ' + price + ' pathUSD placed on Milady #' + String(offerTargetId).padStart(4,'0'));
   } catch (e) {
@@ -2293,33 +2321,60 @@ async function cancelOffer(tokenId) {
 // ── Real Activity from chain ──────────────────────────────
 async function loadActivity() {
   const tbody = document.getElementById('activity-rows');
-  if (!APP.ethersProvider) return;
+  if (!APP.ethersProvider) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">Connect wallet to see activity.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:1em">Loading...</td></tr>';
   try {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:1em">Loading...</td></tr>';
-    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, APP.ethersProvider);
+    const market   = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, APP.ethersProvider);
     const provider = APP.ethersProvider;
+
+    // Fetch each event type independently — if one event name is wrong it won't break the others
+    const safeGet = async (filter) => {
+      try { return await getPaginatedLogs(market, filter, provider); }
+      catch { return []; }
+    };
+
     const [sales, listings, offers] = await Promise.all([
-      getPaginatedLogs(market, market.filters.ItemSold(),   provider),
-      getPaginatedLogs(market, market.filters.ItemListed(), provider),
-      getPaginatedLogs(market, market.filters.OfferMade(),  provider),
+      safeGet(market.filters.ItemSold()),
+      safeGet(market.filters.ItemListed()),
+      safeGet(market.filters.OfferMade()),
     ]);
+
     const all = [
-      ...sales.map(e => ({ block: e.blockNumber, tokenId: Number(e.args.tokenId), price: Number(ethers.formatUnits(e.args.price, 6)), type: 'SALE' })),
-      ...listings.map(e => ({ block: e.blockNumber, tokenId: Number(e.args.tokenId), price: Number(ethers.formatUnits(e.args.price, 6)), type: 'LIST' })),
-      ...offers.map(e => ({ block: e.blockNumber, tokenId: Number(e.args.tokenId), price: Number(ethers.formatUnits(e.args.price, 6)), type: 'OFFER' })),
-    ].sort((a,b) => b.block - a.block).slice(0, 50);
+      ...sales.map(e => ({
+        block: e.blockNumber,
+        tokenId: Number(e.args.tokenId),
+        price: Number(ethers.formatUnits(e.args.price, 6)),
+        type: 'SALE'
+      })),
+      ...listings.map(e => ({
+        block: e.blockNumber,
+        tokenId: Number(e.args.tokenId),
+        price: Number(ethers.formatUnits(e.args.price, 6)),
+        type: 'LIST'
+      })),
+      ...offers.map(e => ({
+        block: e.blockNumber,
+        tokenId: Number(e.args.tokenId),
+        price: Number(ethers.formatUnits(e.args.price, 6)),
+        type: 'OFFER'
+      })),
+    ].sort((a, b) => b.block - a.block).slice(0, 50);
 
     if (!all.length) {
       tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">No activity yet.</td></tr>';
       return;
     }
-    const currentBlock = await APP.ethersProvider.getBlockNumber();
+
+    const currentBlock = await provider.getBlockNumber();
     tbody.innerHTML = all.map(ev => {
       const secsAgo = (currentBlock - ev.block) * 0.5;
-      const timeStr = secsAgo < 60 ? Math.round(secsAgo) + 's ago'
-        : secsAgo < 3600 ? Math.round(secsAgo/60) + 'm ago'
-        : secsAgo < 86400 ? Math.round(secsAgo/3600) + 'h ago'
-        : Math.round(secsAgo/86400) + 'd ago';
+      const timeStr = secsAgo < 60  ? Math.round(secsAgo) + 's ago'
+        : secsAgo < 3600  ? Math.round(secsAgo / 60) + 'm ago'
+        : secsAgo < 86400 ? Math.round(secsAgo / 3600) + 'h ago'
+        : Math.round(secsAgo / 86400) + 'd ago';
       const cls = ev.type === 'SALE' ? 'type-sale' : 'type-list';
       return `<tr>
         <td><img src="https://tempomilady.xyz/pngs/${ev.tokenId}.png"
@@ -2333,7 +2388,7 @@ async function loadActivity() {
     }).join('');
   } catch (e) {
     console.error('loadActivity:', e);
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">⚠ Could not load activity.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">⚠ ' + (e.message || 'Could not load activity') + '</td></tr>';
   }
 }
 
