@@ -695,7 +695,6 @@
 <div class="page-wrap">
 
   <div style="text-align:center;margin:1em 0">
-    <!-- Replace with your actual banner image: <img src="images/banner.png" style="border:2px solid gray;max-width:500px;width:100%" /> -->
     <img src="images/banner.png" style="border:2px solid gray;max-width:500px;width:100%" />
   </div>
 
@@ -722,13 +721,11 @@
     <a href="https://twitter.com/" target="_blank">Tempo Milady Official Twitter</a>
   </p>
 
-  <!-- Collection Box -->
   <div class="box">
     <div class="box_bar"><h2 style="margin:0;font-size:1em">Tempo Milady Collection</h2></div>
     <div class="box_inner">
       <br />
       <div style="text-align:center">
-        <!-- Replace with: <img src="images/milady.gif" /> -->
         <img src="images/milady.gif" style="width:320px;height:404px" />
       </div>
       <p style="text-align:center">
@@ -753,7 +750,6 @@
 
   <hr />
 
-  <!-- Collection details -->
   <h3>Details:</h3>
   <ul style="line-height:1.9">
     <li><b>Avatar-first design:</b> Illustrated to ensure strong social media profile aesthetics with an emphasis on fashion.</li>
@@ -765,7 +761,6 @@
 
   <hr />
 
-  <!-- Style Themes -->
   <div class="box" id="themes">
     <div class="box_bar"><h2 style="margin:0;font-size:1em">Style Themes</h2></div>
     <div class="box_inner">
@@ -799,7 +794,6 @@
 
   <hr />
 
-  <!-- Drip Grade -->
   <div class="box" id="drip_grade">
     <div class="box_bar"><h2 style="margin:0;font-size:1em">Drip Grade</h2></div>
     <div class="box_inner">
@@ -823,7 +817,6 @@
 
   <hr />
 
-  <!-- Roadmap -->
   <div class="box">
     <div class="box_bar"><h2 style="margin:0;font-size:1em">World Map — Roadmap</h2></div>
     <div class="roadmap-item">
@@ -878,7 +871,6 @@
     <div class="box_bar"><h2 style="margin:0;font-size:1em">Mint Your Milady</h2></div>
     <div class="mint-layout">
 
-      <!-- Preview -->
       <div class="mint-preview-box">
         <div class="mint-nft-img" id="mint-preview" style="padding:0;overflow:hidden">
           <img src="https://tempomilady.xyz/pngs/1.png"
@@ -895,7 +887,6 @@
         <p style="font-size:11px;color:#666;margin-top:8px;font-style:italic">Traits randomly assigned at mint. No duplicates.</p>
       </div>
 
-      <!-- Panel -->
       <div class="mint-panel-box">
         <div class="progress-wrap">
           <div class="progress-fill" id="mint-bar" style="width:0%"></div>
@@ -998,7 +989,6 @@
     <div class="empty-box">🌸 No Miladys listed yet. Be the first to list yours and set the floor price.</div>
   </div>
 
-  <!-- MY MILADYS TAB -->
   <div id="mine-section" style="display:none">
     <div class="box">
       <div class="box_bar">
@@ -1016,7 +1006,6 @@
     </div>
   </div>
 
-  <!-- OFFERS TAB -->
   <div id="offers-section" style="display:none">
     <div class="box">
       <div class="box_bar"><h2 style="margin:0;font-size:1em">Offers Received</h2></div>
@@ -1049,7 +1038,6 @@
     </div>
   </div>
 
-  <!-- ACTIVITY TAB -->
   <div id="activity-section" style="display:none">
     <div class="box">
       <div class="box_bar"><h2 style="margin:0;font-size:1em">📜 Recent Activity</h2></div>
@@ -1145,6 +1133,24 @@
   </div>
 </div>
 
+
+<!-- SWEEP MODAL -->
+<div class="modal-overlay" id="sweep-modal">
+  <div class="modal-win">
+    <div class="modal-title-bar">🧹 Sweep Floor <button class="modal-x" onclick="closeModal('sweep-modal')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:12px;margin-bottom:0.7em">Buy multiple floor-priced Miladys in one gas-optimized transaction. Max 20 per sweep.</p>
+      <label class="modal-lbl">Number to sweep (max 20)</label>
+      <input class="modal-input" type="number" id="sweep-count" placeholder="e.g. 5" min="1" max="20" />
+      <div id="sweep-info" style="font-family:'Courier New',monospace;font-size:12px;background:#ffffcc;border:1px solid #ccc;padding:4px 8px;margin-top:8px">
+        FLOOR: — USD &nbsp; | &nbsp; TOTAL: — USD
+      </div>
+      <br />
+      <button class="btn-mint" onclick="executeSweep()">EXECUTE SWEEP</button>
+    </div>
+  </div>
+</div>
+
 <!-- STATUS BAR -->
 <div class="status-bar">
   <div class="led off" id="led"></div>
@@ -1152,7 +1158,6 @@
 </div>
 
 <style>
-  /* ── Wallet overlay (AGENT-style) ── */
   .wallet-overlay {
     display: none; position: fixed; inset: 0;
     background: rgba(0,0,0,0.6); z-index: 2000;
@@ -1212,18 +1217,17 @@
   .wallet-badge { font-size: 9px; color: #4a5e2a; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 1px; }
 </style>
 
-<!-- ethers.js v6 — same CDN as AGENT -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════
 // TEMPO MILADY — CONFIG
 // ═══════════════════════════════════════════════════════
-const NFT_CONTRACT    = '0xef867e3cB2d3B79FC300c7E08DC12FA68a39Ae9A';
-const MARKET_CONTRACT = '0x476fAC9189bc92C7451dfD86737DAf9326b96014';
-const PATHUSD_ADDR    = '0x20c0000000000000000000000000000000000000';
-const TEMPO_CHAIN_ID  = 4217;       // Tempo Mainnet chain ID
-const TEMPO_CHAIN_HEX = '0x1079';
+const NFT_CONTRACT     = '0xef867e3cB2d3B79FC300c7E08DC12FA68a39Ae9A';
+const MARKET_CONTRACT  = '0x476fAC9189bc92C7451dfD86737DAf9326b96014';
+const PATHUSD_ADDR     = '0x20c0000000000000000000000000000000000000';
+const TEMPO_CHAIN_ID   = 4217;
+const TEMPO_CHAIN_HEX  = '0x1079';
 const TEMPO_NETWORK = {
   chainId:           TEMPO_CHAIN_HEX,
   chainName:         'Tempo Mainnet',
@@ -1238,33 +1242,26 @@ const ERC20_ABI = [
   'function approve(address,uint256) returns (bool)',
 ];
 
-const NFT_ABI = [
-  'function balanceOf(address) view returns (uint256)',
-  'function ownerOf(uint256) view returns (address)',
-  'function tokenOfOwnerByIndex(address,uint256) view returns (uint256)',
-  'function totalSupply() view returns (uint256)',
-  'function isApprovedForAll(address,address) view returns (bool)',
-  'function setApprovalForAll(address,bool) returns ()',
-  'function mint(uint256) external',
-  'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)',
-];
-
-// Adjust function names to match your actual marketplace contract
 const MARKET_ABI = [
-  'function listItem(uint256 tokenId, uint256 price) external',
+  'function createListing(uint256 tokenId, uint256 price) external',
   'function cancelListing(uint256 tokenId) external',
-  'function buyItem(uint256 tokenId) external',
-  'function makeOffer(uint256 tokenId, uint256 price, uint256 duration) external',
+  'function buyListing(uint256 tokenId) external',
+  'function makeOffer(uint256 tokenId, uint256 price, uint256 expiry) external',
   'function cancelOffer(uint256 tokenId) external',
   'function acceptOffer(uint256 tokenId, address offerer) external',
-  'function getListing(uint256 tokenId) view returns (address seller, uint256 price, bool active)',
-  'function getOffer(uint256 tokenId, address offerer) view returns (uint256 price, uint256 expiry, bool active)',
-  'event ItemListed(address indexed seller, uint256 indexed tokenId, uint256 price)',
-  'event ItemSold(address indexed seller, address indexed buyer, uint256 indexed tokenId, uint256 price)',
-  'event ListingCancelled(address indexed seller, uint256 indexed tokenId)',
-  'event OfferMade(address indexed offerer, uint256 indexed tokenId, uint256 price, uint256 expiry)',
-  'event OfferAccepted(address indexed seller, address indexed offerer, uint256 indexed tokenId, uint256 price)',
-  'event OfferCancelled(address indexed offerer, uint256 indexed tokenId)',
+  'function sweepFloor(uint256[] tokenIds) external',
+  'function getActiveListings() external view returns ((uint256 tokenId,address seller,uint256 price,bool active)[])',
+  'function getActiveOffers(uint256 tokenId) external view returns ((address offerer,uint256 tokenId,uint256 price,uint256 expiry,bool active)[])',
+  'function feeBps() external view returns (uint256)',
+];
+
+const NFT_MARKET_ABI = [
+  'function ownerOf(uint256 tokenId) view returns (address)',
+  'function isApprovedForAll(address owner, address operator) view returns (bool)',
+  'function getApproved(uint256 tokenId) view returns (address)',
+  'function setApprovalForAll(address operator, bool approved) external',
+  'function balanceOf(address owner) view returns (uint256)',
+  'function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)',
 ];
 
 function nftImageUrl(id) {
@@ -1289,17 +1286,18 @@ function setNftImage(el, id, emoji, bg) {
     el.textContent = emoji;
   }
 }
-// ── App State ────────────────────────────────────────────
+
 const APP = {
   walletAddress:  null,
   activeProvider: null,
   ethersProvider: null,
-  mintQty:    1,
-  mintedCount: 0,
-  listings:   [],
-  totalVolume: 0,
-  totalSales: 0,
-  currentTab: 'listed'
+  mintQty:        1,
+  mintedCount:    0,
+  listings:       [],
+  totalVolume:    0,
+  totalSales:     0,
+  currentTab:     'listed',
+  myNFTs:         [],
 };
 
 const MINT_PRICE = 0.4;
@@ -1312,7 +1310,6 @@ const GRADES     = [
 ];
 const BGS = ['#e8e8f8','#f8e8e8','#e8f8e8','#f8f8e8','#f0e8f8'];
 
-// ── EIP-6963 wallet detection ────────────────────────────
 const injectedWallets = new Map();
 
 window.addEventListener('eip6963:announceProvider', (e) => {
@@ -1322,10 +1319,8 @@ window.addEventListener('eip6963:announceProvider', (e) => {
 
 window.dispatchEvent(new Event('eip6963:requestProvider'));
 
-// ── Wallet Modal ─────────────────────────────────────────
 function openWalletModal() {
   if (APP.walletAddress) {
-    // Already connected — show disconnect option
     disconnectWallet();
     return;
   }
@@ -1345,10 +1340,8 @@ function renderWalletList() {
   const list = document.getElementById('wallet-list');
   list.innerHTML = '';
 
-  // Gather EIP-6963 detected wallets
   let detected = Array.from(injectedWallets.values());
 
-  // Fallback to window.ethereum if no EIP-6963 wallets announced yet
   if (detected.length === 0 && window.ethereum) {
     detected.push({
       info: {
@@ -1373,7 +1366,6 @@ function renderWalletList() {
       }));
     });
   } else {
-    // Nothing detected — show install links
     const lbl = document.createElement('div');
     lbl.className = 'wallet-divider';
     lbl.textContent = 'No wallets detected — install one:';
@@ -1381,7 +1373,7 @@ function renderWalletList() {
 
     [
       { name: 'MetaMask',     url: 'https://metamask.io',      icon: 'https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg' },
-      { name: 'Rabby Wallet', url: 'https://rabby.io',          icon: '' },
+      { name: 'Rabby Wallet', url: 'https://rabby.io',         icon: '' },
       { name: 'OKX Wallet',   url: 'https://www.okx.com/web3', icon: '' },
     ].forEach(w => {
       list.appendChild(makeWalletItem(w.name, w.icon, 'Install →', () => window.open(w.url, '_blank')));
@@ -1413,7 +1405,6 @@ function makeWalletItem(name, iconUrl, badge, onClick) {
   return item;
 }
 
-// ── Connect / Disconnect ─────────────────────────────────
 async function connectWithProvider(provider) {
   try {
     const accounts = await provider.request({ method: 'eth_requestAccounts' });
@@ -1431,11 +1422,13 @@ async function connectWithProvider(provider) {
       APP.walletAddress  = accs[0];
       APP.ethersProvider = new ethers.BrowserProvider(provider);
       updateWalletUI();
+      refreshMarketplace();
     });
 
     provider.on('chainChanged', () => window.location.reload());
 
     updateWalletUI();
+    await refreshMarketplace();
   } catch (e) {
     setStatus('⚠ ' + (e.code === 4001 ? 'Connection rejected' : (e.message || 'Connection failed')));
   }
@@ -1456,25 +1449,25 @@ function disconnectWallet() {
   APP.walletAddress  = null;
   APP.activeProvider = null;
   APP.ethersProvider = null;
+  APP.myNFTs = [];
   updateWalletUI();
 }
 
 function truncAddr(a) { return a ? a.slice(0,6) + '...' + a.slice(-4) : ''; }
 
-// ── UI updates after connect/disconnect ──────────────────
 function updateWalletUI() {
-  const btn    = document.getElementById('wallet-btn');
+  const btn = document.getElementById('wallet-btn');
   const mintBtn = document.getElementById('mint-btn');
-  const led    = document.getElementById('led');
+  const led = document.getElementById('led');
 
   if (APP.walletAddress) {
-    btn.textContent   = truncAddr(APP.walletAddress);
+    btn.textContent = truncAddr(APP.walletAddress);
     btn.style.fontSize = '11px';
     if (mintBtn) mintBtn.textContent = 'MINT NOW';
     led.classList.remove('off');
     setStatus('Connected: ' + truncAddr(APP.walletAddress) + ' — Tempo chain');
   } else {
-    btn.textContent   = 'CONNECT WALLET';
+    btn.textContent = 'CONNECT WALLET';
     btn.style.fontSize = '';
     if (mintBtn) mintBtn.textContent = 'CONNECT WALLET TO MINT';
     led.classList.add('off');
@@ -1487,7 +1480,6 @@ function requireWallet() {
   return true;
 }
 
-// ── Navigation ───────────────────────────────────────────
 function showPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn[id^="nav-"]').forEach(b => b.classList.remove('active'));
@@ -1497,7 +1489,6 @@ function showPage(page) {
   window.scrollTo(0,0);
 }
 
-// ── Mint ─────────────────────────────────────────────────
 function setQty(val) {
   const n = Math.min(100, Math.max(1, parseInt(val) || 1));
   APP.mintQty = n;
@@ -1516,7 +1507,6 @@ function changeQty(d) {
 async function handleMint() {
   if (!requireWallet()) return;
 
-  // Switch chain if needed
   if (APP.ethersProvider) {
     const net = await APP.ethersProvider.getNetwork().catch(() => null);
     if (net && Number(net.chainId) !== TEMPO_CHAIN_ID) {
@@ -1529,40 +1519,106 @@ async function handleMint() {
   btn.disabled = true; btn.textContent = 'MINTING...';
   setStatus('Waiting for wallet confirmation...');
 
-  // TODO: Replace timeout with real contract call:
-  // const signer  = await APP.ethersProvider.getSigner();
-  // const pathusd = new ethers.Contract(PATHUSD_ADDR, ERC20_ABI, signer);
-  // const price   = ethers.parseUnits((APP.mintQty * MINT_PRICE).toString(), 6);
-  // const allowance = await pathusd.allowance(APP.walletAddress, NFT_CONTRACT);
-  // if (BigInt(allowance) < price) await (await pathusd.approve(NFT_CONTRACT, price)).wait();
-  // const contract = new ethers.Contract(NFT_CONTRACT, MINT_ABI, signer);
-  // const tx = await contract.mint(APP.mintQty);
-  // await tx.wait();
+  try {
+    const signer = await APP.ethersProvider.getSigner();
+    const pathusd = new ethers.Contract(PATHUSD_ADDR, ERC20_ABI, signer);
+    const price = ethers.parseUnits((APP.mintQty * MINT_PRICE).toFixed(6), 6);
 
-const signer   = await APP.ethersProvider.getSigner();
-const pathusd  = new ethers.Contract(PATHUSD_ADDR, ERC20_ABI, signer);
-const price    = ethers.parseUnits((APP.mintQty * MINT_PRICE).toFixed(6), 6);
+    const allowance = await pathusd.allowance(APP.walletAddress, NFT_CONTRACT);
+    if (BigInt(allowance) < BigInt(price)) {
+      btn.textContent = 'APPROVING...';
+      await (await pathusd.approve(NFT_CONTRACT, price)).wait();
+    }
 
-const allowance = await pathusd.allowance(APP.walletAddress, NFT_CONTRACT);
-if (BigInt(allowance) < BigInt(price)) {
-  btn.textContent = 'APPROVING...';
-  await (await pathusd.approve(NFT_CONTRACT, price)).wait();
+    btn.textContent = 'CONFIRM IN WALLET...';
+    const contract = new ethers.Contract(NFT_CONTRACT, ['function mint(uint256 qty) external'], signer);
+    const tx = await contract.mint(APP.mintQty);
+    btn.textContent = 'CONFIRMING...';
+    await tx.wait();
+
+    APP.mintedCount += APP.mintQty;
+    document.getElementById('mint-bar').style.width = (APP.mintedCount / TOTAL * 100) + '%';
+    document.getElementById('mint-label').textContent = APP.mintedCount.toLocaleString() + ' / 10,000 MINTED';
+    btn.disabled = false; btn.textContent = 'MINT NOW';
+    setStatus('✓ Minted ' + APP.mintQty + ' Milady' + (APP.mintQty > 1 ? 's' : '') + '! Check your wallet.');
+    await loadMyNFTs();
+  } catch (e) {
+    btn.disabled = false; btn.textContent = 'MINT NOW';
+    setStatus('⚠ ' + (e.reason || e.shortMessage || e.message || 'Mint failed'));
+  }
 }
 
-btn.textContent = 'CONFIRM IN WALLET...';
-const contract = new ethers.Contract(NFT_CONTRACT, ['function mint(uint256 qty) external'], signer);
-const tx = await contract.mint(APP.mintQty);
-btn.textContent = 'CONFIRMING...';
-await tx.wait();
-
-APP.mintedCount += APP.mintQty;
-document.getElementById('mint-bar').style.width = (APP.mintedCount / TOTAL * 100) + '%';
-document.getElementById('mint-label').textContent = APP.mintedCount.toLocaleString() + ' / 10,000 MINTED';
-btn.disabled = false; btn.textContent = 'MINT NOW';
-setStatus('✓ Minted ' + APP.mintQty + ' Milady' + (APP.mintQty > 1 ? 's' : '') + '! Check your wallet.');
+// ── Market helpers ─────────────────────────────────────
+function formatUnits6(v) {
+  return Number(ethers.formatUnits(v, 6));
 }
 
-// ── Marketplace ──────────────────────────────────────────
+function parseUnits6(v) {
+  return ethers.parseUnits(Number(v).toFixed(6), 6);
+}
+
+async function getSigner() {
+  if (!requireWallet()) throw new Error('Wallet not connected');
+  const signer = await APP.ethersProvider.getSigner();
+  const net = await APP.ethersProvider.getNetwork();
+  if (Number(net.chainId) !== TEMPO_CHAIN_ID) {
+    await switchToTempo(APP.activeProvider);
+    throw new Error('Switched network. Please try again.');
+  }
+  return signer;
+}
+
+async function ensureMarketApprovalForNFT(tokenId, signer) {
+  const nft = new ethers.Contract(NFT_CONTRACT, NFT_MARKET_ABI, signer);
+  const approvedForAll = await nft.isApprovedForAll(APP.walletAddress, MARKET_CONTRACT);
+  if (!approvedForAll) {
+    setStatus('Approving marketplace for NFT transfers...');
+    const tx = await nft.setApprovalForAll(MARKET_CONTRACT, true);
+    await tx.wait();
+  }
+}
+
+async function ensurePathUsdApproval(amountNeeded, signer) {
+  const pathusd = new ethers.Contract(PATHUSD_ADDR, ERC20_ABI, signer);
+  const allowance = await pathusd.allowance(APP.walletAddress, MARKET_CONTRACT);
+  if (BigInt(allowance) < BigInt(amountNeeded)) {
+    setStatus('Approving pathUSD...');
+    const tx = await pathusd.approve(MARKET_CONTRACT, amountNeeded);
+    await tx.wait();
+  }
+}
+
+async function refreshMarketplace() {
+  if (!APP.ethersProvider || !MARKET_CONTRACT) return;
+  try {
+    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, APP.ethersProvider);
+    const listings = await market.getActiveListings();
+
+    APP.listings = listings.map((l) => {
+      const idNum = Number(l.tokenId);
+      const gr = GRADES[idNum % GRADES.length];
+      return {
+        id: idNum,
+        seller: l.seller,
+        price: formatUnits6(l.price),
+        rawPrice: l.price,
+        emoji: EMOJIS[idNum % EMOJIS.length],
+        bg: BGS[idNum % BGS.length],
+        grade: gr.g,
+        gradeColor: gr.c,
+        drip: gr.d
+      };
+    });
+
+    updateMarketStats();
+    if (APP.currentTab === 'listed') renderGrid('listed');
+    if (APP.currentTab === 'mine') loadMyNFTs();
+    if (APP.currentTab === 'offers') loadOffers();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 function switchTab(tab, el) {
   APP.currentTab = tab;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1575,7 +1631,7 @@ function switchTab(tab, el) {
 
   if (tab === 'listed') {
     document.getElementById('market-content').style.display = 'block';
-    loadListings();
+    renderGrid('listed');
   } else if (tab === 'mine') {
     document.getElementById('mine-section').style.display = 'block';
     loadMyNFTs();
@@ -1584,230 +1640,198 @@ function switchTab(tab, el) {
     loadOffers();
   } else if (tab === 'activity') {
     document.getElementById('activity-section').style.display = 'block';
-    loadActivity();
   }
 }
 
-// ── Load all listings from marketplace contract ───────────
-async function loadListings() {
+function renderGrid(tab) {
   const c = document.getElementById('market-content');
-  if (!APP.ethersProvider) { c.innerHTML = '<div class="empty-box">🌸 Connect wallet to load listings.</div>'; return; }
-  try {
-    c.innerHTML = '<div class="empty-box">Loading listings...</div>';
-    const market    = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, APP.ethersProvider);
-    const listed    = await market.queryFilter(market.filters.ItemListed());
-    const sold      = await market.queryFilter(market.filters.ItemSold());
-    const cancelled = await market.queryFilter(market.filters.ListingCancelled());
-
-    const soldIds      = new Set(sold.map(e => Number(e.args.tokenId)));
-    const cancelledIds = new Set(cancelled.map(e => Number(e.args.tokenId)));
-
-    const active = listed.filter(e => {
-      const id = Number(e.args.tokenId);
-      return !soldIds.has(id) && !cancelledIds.has(id);
-    });
-
-    if (!active.length) {
-      c.innerHTML = '<div class="empty-box">🌸 No Miladys listed yet. Be the first to list yours.</div>';
-      APP.listings = [];
-      updateMarketStats();
-      return;
-    }
-
-    APP.listings = active.map(e => ({
-      id:     Number(e.args.tokenId),
-      price:  Number(ethers.formatUnits(e.args.price, 6)),
-      seller: e.args.seller
-    }));
-    updateMarketStats();
-    renderGridFromData(APP.listings);
-  } catch (e) {
-    console.error('loadListings:', e);
-    c.innerHTML = '<div class="empty-box">⚠ Could not load listings: ' + (e.message || 'error') + '</div>';
-  }
-}
-
-function renderGridFromData(listings) {
-  const c = document.getElementById('market-content');
-  if (!listings.length) {
-    c.innerHTML = '<div class="empty-box">🌸 No Miladys listed yet.</div>';
+  const L = APP.listings;
+  if (!L.length) {
+    c.innerHTML = '<div class="empty-box">🌸 No Miladys listed yet. Be the first to list yours and set the floor price.</div>';
     return;
   }
-  c.innerHTML = '<div class="nft-grid">' + listings.map(l =>
+  c.innerHTML = '<div class="nft-grid">' + L.map(l =>
     `<div class="nft-card">
-      <div class="nft-card-img" style="background:#e8e8f8;padding:0;overflow:hidden">
-        <img src="https://tempomilady.xyz/pngs/${l.id}.png"
-          style="width:100%;height:100%;object-fit:cover;display:block"
-          onerror="this.style.display='none'" />
+      <div class="nft-card-img" id="nft-img-${l.id}" style="background:${l.bg}">
+        <span class="nft-fallback">${l.emoji}</span>
       </div>
       <div class="nft-card-body">
-        <div class="nft-card-id">Milady #${String(l.id).padStart(4,"0")}</div>
+        <div class="nft-card-id">Milady #${String(l.id).padStart(4,'0')}</div>
         <div class="nft-card-row">
           <span class="nft-card-price">${l.price} USD</span>
+          <span class="nft-card-grade" style="color:${l.gradeColor}">${l.grade}</span>
         </div>
-        <button class="nft-buy-btn" style="display:block" onclick="buyNFT(${l.id},${l.price})">BUY NOW</button>
-        <button class="nft-buy-btn" style="display:block;background:#555;border-color:#444;margin-top:2px" onclick="openOfferModal(${l.id},${l.price})">MAKE OFFER</button>
+        <button class="nft-buy-btn" onclick="buyNFT(${l.id})">BUY NOW</button>
+        <button class="nft-buy-btn" style="background:#555;border-color:#444;margin-top:2px" onclick="openOfferModal(${l.id},${l.price})">MAKE OFFER</button>
       </div>
     </div>`
   ).join('') + '</div>';
+
+  L.forEach(l => {
+    const el = document.getElementById('nft-img-' + l.id);
+    if (el) setNftImage(el, l.id, l.emoji, l.bg);
+  });
 }
 
 function sortListings(val) {
   const L = APP.listings;
-  if (val === 'price-asc')  L.sort((a,b) => a.price - b.price);
-  if (val === 'price-desc') L.sort((a,b) => b.price - a.price);
-  if (val === 'id-asc')     L.sort((a,b) => a.id - b.id);
-  renderGridFromData(L);
+  if (val === 'price-asc')  L.sort((a,b)=>a.price-b.price);
+  if (val === 'price-desc') L.sort((a,b)=>b.price-a.price);
+  if (val === 'id-asc')     L.sort((a,b)=>a.id-b.id);
+  if (val === 'drip')       L.sort((a,b)=>b.drip-a.drip);
+  renderGrid(APP.currentTab);
 }
 
-function renderGrid() { loadListings(); }
-
-// ── Buy NFT ───────────────────────────────────────────────
-async function buyNFT(id, price) {
+async function buyNFT(id) {
   if (!requireWallet()) return;
-  try {
-    const signer   = await APP.ethersProvider.getSigner();
-    const pathusd  = new ethers.Contract(PATHUSD_ADDR, ERC20_ABI, signer);
-    const market   = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
-    const priceWei = ethers.parseUnits(price.toString(), 6);
 
-    const allowance = await pathusd.allowance(APP.walletAddress, MARKET_CONTRACT);
-    if (BigInt(allowance) < BigInt(priceWei)) {
-      setStatus('Approving pathUSD...');
-      await (await pathusd.approve(MARKET_CONTRACT, priceWei)).wait();
-    }
-    setStatus('Confirm purchase in wallet...');
-    const tx = await market.buyItem(id);
-    setStatus('Confirming...');
+  try {
+    const signer = await getSigner();
+    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+    const listing = APP.listings.find(l => l.id === id);
+    if (!listing) throw new Error('Listing not found');
+
+    await ensurePathUsdApproval(listing.rawPrice, signer);
+
+    setStatus('Buying Milady #' + String(id).padStart(4,'0') + '...');
+    const tx = await market.buyListing(id);
     await tx.wait();
 
-    APP.totalVolume += price; APP.totalSales++;
-    setStatus('✓ Purchased Milady #' + String(id).padStart(4,'0') + ' for ' + price + ' pathUSD');
-    loadListings();
-    updateMarketStats();
+    APP.totalVolume += listing.price;
+    APP.totalSales++;
+    await refreshMarketplace();
+
+    setStatus('✓ Purchased Milady #' + String(id).padStart(4,'0') + ' for ' + listing.price + ' pathUSD');
+    addActivity('Milady #' + String(id).padStart(4,'0'), listing.price, 'SALE');
   } catch (e) {
-    setStatus('⚠ ' + (e.reason || e.message || 'Purchase failed'));
+    setStatus('⚠ ' + (e.reason || e.shortMessage || e.message || 'Buy failed'));
   }
 }
 
-// ── List NFT ──────────────────────────────────────────────
 function openList() {
   if (!requireWallet()) return;
-  document.getElementById('list-id').value = '';
-  document.getElementById('list-price').value = '';
   document.getElementById('list-modal').classList.add('open');
 }
 
 function openListFromNFT(id) {
-  if (!requireWallet()) return;
   document.getElementById('list-id').value = id;
-  document.getElementById('list-price').value = '';
   document.getElementById('list-modal').classList.add('open');
 }
 
 async function submitListing() {
   if (!requireWallet()) return;
-  const id    = parseInt(document.getElementById('list-id').value);
+
+  const id = parseInt(document.getElementById('list-id').value);
   const price = parseFloat(document.getElementById('list-price').value);
+
   if (!id || !price || price <= 0 || id < 1 || id > 10000) {
-    setStatus('⚠ Enter a valid Token ID (1–10000) and price'); return;
+    setStatus('⚠ Enter a valid Token ID (1–10000) and price');
+    return;
   }
+
   try {
-    const signer = await APP.ethersProvider.getSigner();
-    const nft    = new ethers.Contract(NFT_CONTRACT, NFT_ABI, signer);
+    const signer = await getSigner();
+    await ensureMarketApprovalForNFT(id, signer);
+
     const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+    const priceUnits = parseUnits6(price);
 
-    // Verify ownership
-    const owner = await nft.ownerOf(id);
-    if (owner.toLowerCase() !== APP.walletAddress.toLowerCase()) {
-      setStatus('⚠ You do not own Milady #' + String(id).padStart(4,'0')); return;
-    }
-
-    // Approve marketplace if needed
-    const approved = await nft.isApprovedForAll(APP.walletAddress, MARKET_CONTRACT);
-    if (!approved) {
-      setStatus('Approving marketplace...');
-      await (await nft.setApprovalForAll(MARKET_CONTRACT, true)).wait();
-    }
-
-    const priceWei = ethers.parseUnits(price.toFixed(6), 6);
-    setStatus('Confirm listing in wallet...');
-    await (await market.listItem(id, priceWei)).wait();
+    setStatus('Creating listing for Milady #' + String(id).padStart(4,'0') + '...');
+    const tx = await market.createListing(id, priceUnits);
+    await tx.wait();
 
     closeModal('list-modal');
+    document.getElementById('list-id').value = '';
+    document.getElementById('list-price').value = '';
+
+    await refreshMarketplace();
     setStatus('✓ Listed Milady #' + String(id).padStart(4,'0') + ' for ' + price + ' pathUSD');
-    loadListings();
-    if (APP.currentTab === 'mine') loadMyNFTs();
+    addActivity('Milady #' + String(id).padStart(4,'0'), price, 'LISTED');
   } catch (e) {
-    setStatus('⚠ ' + (e.reason || e.message || 'Listing failed'));
+    setStatus('⚠ ' + (e.reason || e.shortMessage || e.message || 'Listing failed'));
   }
 }
 
 async function cancelListing(id) {
   if (!requireWallet()) return;
+
   try {
-    const signer = await APP.ethersProvider.getSigner();
+    const signer = await getSigner();
     const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
-    setStatus('Confirm cancel in wallet...');
-    await (await market.cancelListing(id)).wait();
+
+    setStatus('Cancelling listing for Milady #' + String(id).padStart(4,'0') + '...');
+    const tx = await market.cancelListing(id);
+    await tx.wait();
+
+    await refreshMarketplace();
     setStatus('✓ Listing cancelled for Milady #' + String(id).padStart(4,'0'));
-    loadListings();
-    loadMyNFTs();
   } catch (e) {
-    setStatus('⚠ ' + (e.reason || e.message || 'Cancel failed'));
+    setStatus('⚠ ' + (e.reason || e.shortMessage || e.message || 'Cancel failed'));
   }
 }
 
-// ── Sweep ─────────────────────────────────────────────────
 function openSweep() {
   if (!requireWallet()) return;
-  const L     = APP.listings;
+  const L = APP.listings;
   const floor = L.length ? Math.min(...L.map(l => l.price)) : 0;
-  document.getElementById('sweep-info').textContent = 'FLOOR: ' + (floor ? floor + ' USD' : '— USD') + '   |   Enter qty to calculate total';
+  document.getElementById('sweep-info').textContent =
+    'FLOOR: ' + (floor ? floor.toFixed(2) + ' USD' : '— USD') + '   |   Enter qty to calculate total';
   document.getElementById('sweep-modal').classList.add('open');
 }
 
 async function executeSweep() {
   if (!requireWallet()) return;
-  const L     = APP.listings;
-  const count = Math.min(parseInt(document.getElementById('sweep-count').value) || 1, 20);
-  if (!L.length) { setStatus('⚠ No listings to sweep'); return; }
-  const toSweep = [...L].sort((a,b) => a.price - b.price).slice(0, Math.min(count, L.length));
-  const total   = toSweep.reduce((s,l) => s + l.price, 0);
-  try {
-    const signer   = await APP.ethersProvider.getSigner();
-    const pathusd  = new ethers.Contract(PATHUSD_ADDR, ERC20_ABI, signer);
-    const market   = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
-    const totalWei = ethers.parseUnits(total.toFixed(6), 6);
 
-    const allowance = await pathusd.allowance(APP.walletAddress, MARKET_CONTRACT);
-    if (BigInt(allowance) < BigInt(totalWei)) {
-      setStatus('Approving pathUSD...');
-      await (await pathusd.approve(MARKET_CONTRACT, totalWei)).wait();
+  try {
+    const count = Math.min(parseInt(document.getElementById('sweep-count').value) || 1, 20);
+    if (!APP.listings.length) {
+      setStatus('⚠ No listings to sweep');
+      return;
     }
-    for (const l of toSweep) {
-      setStatus('Buying Milady #' + String(l.id).padStart(4,'0') + '...');
-      await (await market.buyItem(l.id)).wait();
-    }
-    APP.totalVolume += total; APP.totalSales += toSweep.length;
+
+    const toSweep = [...APP.listings]
+      .sort((a, b) => a.price - b.price)
+      .slice(0, Math.min(count, APP.listings.length));
+
+    const tokenIds = toSweep.map(l => l.id);
+    const totalRaw = toSweep.reduce((sum, l) => sum + BigInt(l.rawPrice), 0n);
+    const total = toSweep.reduce((sum, l) => sum + l.price, 0);
+
+    const signer = await getSigner();
+    await ensurePathUsdApproval(totalRaw, signer);
+
+    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+    setStatus('Sweeping ' + tokenIds.length + ' Miladys...');
+    const tx = await market.sweepFloor(tokenIds);
+    await tx.wait();
+
+    APP.totalVolume += total;
+    APP.totalSales += tokenIds.length;
     document.getElementById('sweep-modal').classList.remove('open');
-    setStatus('🧹 Swept ' + toSweep.length + ' Miladys for ' + total.toFixed(2) + ' pathUSD');
-    updateMarketStats();
-    loadListings();
+
+    await refreshMarketplace();
+    setStatus('🧹 Swept ' + tokenIds.length + ' Milady' + (tokenIds.length > 1 ? 's' : '') + ' for ' + total.toFixed(2) + ' pathUSD');
   } catch (e) {
-    setStatus('⚠ ' + (e.reason || e.message || 'Sweep failed'));
+    setStatus('⚠ ' + (e.reason || e.shortMessage || e.message || 'Sweep failed'));
   }
 }
 
 function updateMarketStats() {
   const L = APP.listings;
-  document.getElementById('stat-listed').textContent  = L.length;
-  document.getElementById('stat-floor').textContent   = L.length ? Math.min(...L.map(l=>l.price)) + ' USD' : '— USD';
-  document.getElementById('stat-volume').textContent  = APP.totalVolume.toFixed(1) + ' USD';
-  document.getElementById('stat-sales').textContent   = APP.totalSales;
+  document.getElementById('stat-listed').textContent = L.length;
+  document.getElementById('stat-floor').textContent = L.length ? Math.min(...L.map(l=>l.price)).toFixed(2) + ' USD' : '— USD';
+  document.getElementById('stat-volume').textContent = APP.totalVolume.toFixed(1) + ' USD';
+  document.getElementById('stat-sales').textContent = APP.totalSales;
 }
 
-// ── My NFTs (real images, real ownership) ─────────────────
+function addActivity(token, price, type) {
+  const tbody = document.getElementById('activity-rows');
+  const row = document.createElement('tr');
+  const cls = type === 'SALE' ? 'type-sale' : type === 'OFFER' ? 'type-list' : 'type-list';
+  row.innerHTML = `<td>🌸</td><td>${token}</td><td>${price} USD</td><td class="${cls}">${type}</td><td>just now</td>`;
+  tbody.insertBefore(row, tbody.firstChild);
+}
+
 async function loadMyNFTs() {
   const grid = document.getElementById('my-nfts-grid');
   if (!APP.walletAddress) {
@@ -1815,30 +1839,42 @@ async function loadMyNFTs() {
     return;
   }
   grid.innerHTML = '<div class="empty-box">Loading your Miladys...</div>';
+
+  if (!NFT_CONTRACT) {
+    grid.innerHTML = '<div class="empty-box">Contract not deployed yet — your NFTs will appear here after mint.</div>';
+    return;
+  }
+
   try {
-    const nft     = new ethers.Contract(NFT_CONTRACT, NFT_ABI, APP.ethersProvider);
-    const balance = Number(await nft.balanceOf(APP.walletAddress));
+    const contract = new ethers.Contract(NFT_CONTRACT, [
+      'function balanceOf(address) view returns (uint256)',
+      'function tokenOfOwnerByIndex(address, uint256) view returns (uint256)',
+    ], APP.ethersProvider);
+
+    const balance = Number(await contract.balanceOf(APP.walletAddress));
     if (balance === 0) {
-      grid.innerHTML = '<div class="empty-box">You don't own any Miladys yet. Mint one to get started!</div>';
+      APP.myNFTs = [];
+      grid.innerHTML = '<div class="empty-box">You don\'t own any Miladys yet. Mint one to get started!</div>';
       return;
     }
+
     const ids = await Promise.all(
       Array.from({ length: balance }, (_, i) =>
-        nft.tokenOfOwnerByIndex(APP.walletAddress, i).then(Number)
+        contract.tokenOfOwnerByIndex(APP.walletAddress, i).then(Number)
       )
     );
     APP.myNFTs = ids;
-    const listedIds = new Set(APP.listings.map(l => l.id));
+
     grid.innerHTML = '<div class="nft-grid">' + ids.map(id => {
-      const isListed = listedIds.has(id);
+      const emoji = EMOJIS[id % EMOJIS.length];
+      const bg = BGS[id % BGS.length];
+      const isListed = APP.listings.find(l => l.id === id);
       return `<div class="nft-card">
-        <div class="nft-card-img" style="background:#e8e8f8;padding:0;overflow:hidden">
-          <img src="https://tempomilady.xyz/pngs/${id}.png"
-            style="width:100%;height:100%;object-fit:cover;display:block"
-            onerror="this.style.display='none'" />
+        <div class="nft-card-img" id="my-nft-img-${id}" style="background:${bg}">
+          <span class="nft-fallback">${emoji}</span>
         </div>
         <div class="nft-card-body">
-          <div class="nft-card-id">Milady #${String(id).padStart(4,"0")}</div>
+          <div class="nft-card-id">Milady #${String(id).padStart(4,'0')}</div>
           <div style="margin-top:4px">
             ${isListed
               ? `<button class="nft-buy-btn" style="display:block;background:#888;border-color:#666" onclick="cancelListing(${id})">CANCEL LISTING</button>`
@@ -1848,209 +1884,33 @@ async function loadMyNFTs() {
         </div>
       </div>`;
     }).join('') + '</div>';
+
+    ids.forEach(id => {
+      const el = document.getElementById('my-nft-img-' + id);
+      if (!el) return;
+      el.innerHTML = '';
+      el.style.padding = '0';
+      const img = document.createElement('img');
+      img.src = `https://tempomilady.xyz/pngs/${id}.png`;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+      img.onerror = () => { el.style.padding = ''; el.textContent = EMOJIS[id % EMOJIS.length]; };
+      el.appendChild(img);
+    });
+
     setStatus('Found ' + balance + ' Milady' + (balance > 1 ? 's' : '') + ' in your wallet');
   } catch (e) {
-    console.error('loadMyNFTs:', e);
-    grid.innerHTML = '<div class="empty-box">⚠ Could not load NFTs: ' + (e.message || 'error') + '</div>';
+    grid.innerHTML = '<div class="empty-box">⚠ Could not load NFTs: ' + (e.message || 'unknown error') + '</div>';
   }
 }
 
-// ── Offers ────────────────────────────────────────────────
-let offerTargetId = null;
-
-function openOfferModal(id, currentPrice) {
-  if (!requireWallet()) return;
-  offerTargetId = id;
-  document.getElementById('offer-token-info').textContent =
-    'Milady #' + String(id).padStart(4,'0') + '  |  Listed at: ' + currentPrice + ' pathUSD';
-  document.getElementById('offer-price').value = '';
-  document.getElementById('offer-modal').classList.add('open');
-}
-
-async function submitOffer() {
-  if (!requireWallet() || !offerTargetId) return;
-  const price  = parseFloat(document.getElementById('offer-price').value);
-  const expiry = parseInt(document.getElementById('offer-expiry').value);
-  if (!price || price <= 0) { setStatus('⚠ Enter a valid offer price'); return; }
-  try {
-    const signer   = await APP.ethersProvider.getSigner();
-    const pathusd  = new ethers.Contract(PATHUSD_ADDR, ERC20_ABI, signer);
-    const market   = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
-    const priceWei = ethers.parseUnits(price.toFixed(6), 6);
-
-    const allowance = await pathusd.allowance(APP.walletAddress, MARKET_CONTRACT);
-    if (BigInt(allowance) < BigInt(priceWei)) {
-      setStatus('Approving pathUSD...');
-      await (await pathusd.approve(MARKET_CONTRACT, priceWei)).wait();
-    }
-    setStatus('Confirm offer in wallet...');
-    await (await market.makeOffer(offerTargetId, priceWei, expiry * 86400)).wait();
-    closeModal('offer-modal');
-    setStatus('✓ Offer of ' + price + ' pathUSD placed on Milady #' + String(offerTargetId).padStart(4,'0'));
-  } catch (e) {
-    setStatus('⚠ ' + (e.reason || e.message || 'Offer failed'));
-  }
-}
-
-async function loadOffers() {
-  const receivedBody = document.getElementById('offers-rows');
-  const myOffersBody = document.getElementById('my-offers-rows');
-  if (!APP.walletAddress || !APP.ethersProvider) {
-    receivedBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">Connect wallet to see offers.</td></tr>';
-    myOffersBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">Connect wallet to see your offers.</td></tr>';
-    return;
-  }
-  try {
-    const market      = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, APP.ethersProvider);
-    const allOffers   = await market.queryFilter(market.filters.OfferMade());
-    const accepted    = await market.queryFilter(market.filters.OfferAccepted());
-    const cancelled   = await market.queryFilter(market.filters.OfferCancelled());
-
-    const acceptedKeys  = new Set(accepted.map(e => `${Number(e.args.tokenId)}-${e.args.offerer.toLowerCase()}`));
-    const cancelledKeys = new Set(cancelled.map(e => `${Number(e.args.tokenId)}-${e.args.offerer.toLowerCase()}`));
-    const myNFTIds      = new Set(APP.myNFTs || []);
-
-    const received = allOffers.filter(e => {
-      const key = `${Number(e.args.tokenId)}-${e.args.offerer.toLowerCase()}`;
-      return myNFTIds.has(Number(e.args.tokenId)) && !acceptedKeys.has(key) && !cancelledKeys.has(key);
-    });
-
-    const myOffers = allOffers.filter(e => {
-      const key = `${Number(e.args.tokenId)}-${e.args.offerer.toLowerCase()}`;
-      return e.args.offerer.toLowerCase() === APP.walletAddress.toLowerCase()
-        && !acceptedKeys.has(key) && !cancelledKeys.has(key);
-    });
-
-    receivedBody.innerHTML = received.length
-      ? received.map(e => {
-          const id    = Number(e.args.tokenId);
-          const price = Number(ethers.formatUnits(e.args.price, 6));
-          const from  = e.args.offerer;
-          const exp   = new Date(Number(e.args.expiry) * 1000).toLocaleDateString();
-          return `<tr>
-            <td>Milady #${String(id).padStart(4,'0')}</td>
-            <td><b>${price} USD</b></td>
-            <td>${truncAddr(from)}</td>
-            <td>${exp}</td>
-            <td><button class="btn-act btn-act-primary" style="font-size:11px;padding:2px 8px" onclick="acceptOffer(${id},'${from}',${price})">ACCEPT</button></td>
-          </tr>`;
-        }).join('')
-      : '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">No offers received yet.</td></tr>';
-
-    myOffersBody.innerHTML = myOffers.length
-      ? myOffers.map(e => {
-          const id    = Number(e.args.tokenId);
-          const price = Number(ethers.formatUnits(e.args.price, 6));
-          const exp   = new Date(Number(e.args.expiry) * 1000).toLocaleDateString();
-          return `<tr>
-            <td>Milady #${String(id).padStart(4,'0')}</td>
-            <td><b>${price} USD</b></td>
-            <td>Pending</td>
-            <td>${exp}</td>
-            <td><button class="btn-act" style="font-size:11px;padding:2px 8px" onclick="cancelOffer(${id})">CANCEL</button></td>
-          </tr>`;
-        }).join('')
-      : '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">No active offers.</td></tr>';
-  } catch (e) {
-    console.error('loadOffers:', e);
-    receivedBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">⚠ Could not load offers.</td></tr>';
-  }
-}
-
-async function acceptOffer(tokenId, from, price) {
-  if (!requireWallet()) return;
-  try {
-    const signer = await APP.ethersProvider.getSigner();
-    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
-    setStatus('Confirm accept in wallet...');
-    await (await market.acceptOffer(tokenId, from)).wait();
-    APP.totalVolume += price; APP.totalSales++;
-    updateMarketStats();
-    setStatus('✓ Accepted offer of ' + price + ' pathUSD for Milady #' + String(tokenId).padStart(4,'0'));
-    loadOffers();
-  } catch (e) {
-    setStatus('⚠ ' + (e.reason || e.message || 'Accept failed'));
-  }
-}
-
-async function cancelOffer(tokenId) {
-  if (!requireWallet()) return;
-  try {
-    const signer = await APP.ethersProvider.getSigner();
-    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
-    setStatus('Confirm cancel in wallet...');
-    await (await market.cancelOffer(tokenId)).wait();
-    setStatus('✓ Offer cancelled on Milady #' + String(tokenId).padStart(4,'0'));
-    loadOffers();
-  } catch (e) {
-    setStatus('⚠ ' + (e.reason || e.message || 'Cancel failed'));
-  }
-}
-
-// ── Real Activity from chain ──────────────────────────────
-async function loadActivity() {
-  const tbody = document.getElementById('activity-rows');
-  if (!APP.ethersProvider) return;
-  try {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:1em">Loading...</td></tr>';
-    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, APP.ethersProvider);
-    const [sales, listings, offers] = await Promise.all([
-      market.queryFilter(market.filters.ItemSold()),
-      market.queryFilter(market.filters.ItemListed()),
-      market.queryFilter(market.filters.OfferMade()),
-    ]);
-    const all = [
-      ...sales.map(e => ({ block: e.blockNumber, tokenId: Number(e.args.tokenId), price: Number(ethers.formatUnits(e.args.price, 6)), type: 'SALE' })),
-      ...listings.map(e => ({ block: e.blockNumber, tokenId: Number(e.args.tokenId), price: Number(ethers.formatUnits(e.args.price, 6)), type: 'LIST' })),
-      ...offers.map(e => ({ block: e.blockNumber, tokenId: Number(e.args.tokenId), price: Number(ethers.formatUnits(e.args.price, 6)), type: 'OFFER' })),
-    ].sort((a,b) => b.block - a.block).slice(0, 50);
-
-    if (!all.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">No activity yet.</td></tr>';
-      return;
-    }
-    const currentBlock = await APP.ethersProvider.getBlockNumber();
-    tbody.innerHTML = all.map(ev => {
-      const secsAgo = (currentBlock - ev.block) * 0.5;
-      const timeStr = secsAgo < 60 ? Math.round(secsAgo) + 's ago'
-        : secsAgo < 3600 ? Math.round(secsAgo/60) + 'm ago'
-        : secsAgo < 86400 ? Math.round(secsAgo/3600) + 'h ago'
-        : Math.round(secsAgo/86400) + 'd ago';
-      const cls = ev.type === 'SALE' ? 'type-sale' : 'type-list';
-      return `<tr>
-        <td><img src="https://tempomilady.xyz/pngs/${ev.tokenId}.png"
-          style="width:28px;height:28px;object-fit:cover;vertical-align:middle;border:1px solid #ccc"
-          onerror="this.style.display='none'" /></td>
-        <td>Milady #${String(ev.tokenId).padStart(4,'0')}</td>
-        <td>${ev.price} USD</td>
-        <td class="${cls}">${ev.type}</td>
-        <td>${timeStr}</td>
-      </tr>`;
-    }).join('');
-  } catch (e) {
-    console.error('loadActivity:', e);
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">⚠ Could not load activity.</td></tr>';
-  }
-}
-
-// ── Modals ───────────────────────────────────────────────
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.modal-overlay').forEach(m =>
-    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); })
-  );
-});
-
-function setStatus(msg) { document.getElementById('status-text').textContent = msg; }
-
-// ── Mint progress — real-time from contract ───────────────
 async function fetchMintedCount() {
-  if (!NFT_CONTRACT) return;
+  if (!NFT_CONTRACT || !APP.ethersProvider) return;
   try {
-    const provider = APP.ethersProvider || new ethers.JsonRpcProvider('https://rpc.tempo.xyz');
-    const nft      = new ethers.Contract(NFT_CONTRACT, NFT_ABI, provider);
-    const supply   = Number(await nft.totalSupply());
+    const contract = new ethers.Contract(NFT_CONTRACT,
+      ['function totalSupply() view returns (uint256)'],
+      APP.ethersProvider
+    );
+    const supply = Number(await contract.totalSupply());
     APP.mintedCount = supply;
     const pct = (supply / TOTAL * 100).toFixed(1);
     document.getElementById('mint-bar').style.width = pct + '%';
@@ -2064,7 +1924,187 @@ async function fetchMintedCount() {
   } catch {}
 }
 
-// ── Auto-reconnect on page load ──────────────────────────
+let offerTargetId = null;
+
+function openOfferModal(id, currentPrice) {
+  if (!requireWallet()) return;
+  offerTargetId = id;
+  document.getElementById('offer-token-info').textContent =
+    'Milady #' + String(id).padStart(4,'0') + '  |  Listed at: ' + currentPrice + ' pathUSD';
+  document.getElementById('offer-price').value = '';
+  document.getElementById('offer-modal').classList.add('open');
+}
+
+async function submitOffer() {
+  if (!requireWallet() || !offerTargetId) return;
+
+  const price = parseFloat(document.getElementById('offer-price').value);
+  const expiryDays = parseInt(document.getElementById('offer-expiry').value);
+
+  if (!price || price <= 0) {
+    setStatus('⚠ Enter a valid offer price');
+    return;
+  }
+
+  try {
+    const signer = await getSigner();
+    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+
+    const priceUnits = parseUnits6(price);
+    const expiryTimestamp = Math.floor(Date.now() / 1000) + (expiryDays * 86400);
+
+    await ensurePathUsdApproval(priceUnits, signer);
+
+    setStatus('Submitting offer for Milady #' + String(offerTargetId).padStart(4,'0') + '...');
+    const tx = await market.makeOffer(offerTargetId, priceUnits, expiryTimestamp);
+    await tx.wait();
+
+    closeModal('offer-modal');
+    setStatus('✓ Offer of ' + price + ' pathUSD placed on Milady #' + String(offerTargetId).padStart(4,'0'));
+    addActivity('Milady #' + String(offerTargetId).padStart(4,'0'), price, 'OFFER');
+
+    await loadOffers();
+  } catch (e) {
+    setStatus('⚠ ' + (e.reason || e.shortMessage || e.message || 'Offer failed'));
+  }
+}
+
+async function loadOffers() {
+  const receivedBody = document.getElementById('offers-rows');
+  const myOffersBody = document.getElementById('my-offers-rows');
+
+  if (!APP.walletAddress) {
+    receivedBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">Connect wallet to see offers.</td></tr>';
+    myOffersBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">Connect wallet to see your offers.</td></tr>';
+    return;
+  }
+
+  try {
+    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, APP.ethersProvider);
+    const nft = new ethers.Contract(NFT_CONTRACT, NFT_MARKET_ABI, APP.ethersProvider);
+
+    const myIds = APP.myNFTs && APP.myNFTs.length
+      ? APP.myNFTs
+      : await (async () => {
+          const balance = Number(await nft.balanceOf(APP.walletAddress));
+          return Promise.all(
+            Array.from({ length: balance }, (_, i) => nft.tokenOfOwnerByIndex(APP.walletAddress, i).then(Number))
+          );
+        })();
+
+    APP.myNFTs = myIds;
+
+    let receivedOffers = [];
+    for (const tokenId of myIds) {
+      const offers = await market.getActiveOffers(tokenId);
+      for (const o of offers) {
+        receivedOffers.push({
+          id: Number(o.tokenId),
+          price: formatUnits6(o.price),
+          from: o.offerer,
+          expiry: o.expiry == 0n ? 'Never' : new Date(Number(o.expiry) * 1000).toLocaleDateString()
+        });
+      }
+    }
+
+    receivedBody.innerHTML = receivedOffers.length
+      ? receivedOffers.map(o =>
+          `<tr>
+            <td>Milady #${String(o.id).padStart(4,'0')}</td>
+            <td><b>${o.price} USD</b></td>
+            <td>${truncAddr(o.from)}</td>
+            <td>${o.expiry}</td>
+            <td><button class="btn-act btn-act-primary" style="font-size:11px;padding:2px 8px" onclick="acceptOffer(${o.id},'${o.from}',${o.price})">ACCEPT</button></td>
+          </tr>`
+        ).join('')
+      : '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">No offers received yet.</td></tr>';
+
+    const listedIds = APP.listings.map(l => l.id);
+    let myOffers = [];
+    for (const tokenId of listedIds) {
+      const offers = await market.getActiveOffers(tokenId);
+      for (const o of offers) {
+        if (o.offerer.toLowerCase() === APP.walletAddress.toLowerCase()) {
+          myOffers.push({
+            id: Number(o.tokenId),
+            price: formatUnits6(o.price),
+            status: 'Active',
+            expiry: o.expiry == 0n ? 'Never' : new Date(Number(o.expiry) * 1000).toLocaleDateString()
+          });
+        }
+      }
+    }
+
+    myOffersBody.innerHTML = myOffers.length
+      ? myOffers.map(o =>
+          `<tr>
+            <td>Milady #${String(o.id).padStart(4,'0')}</td>
+            <td><b>${o.price} USD</b></td>
+            <td>${o.status}</td>
+            <td>${o.expiry}</td>
+            <td><button class="btn-act" style="font-size:11px;padding:2px 8px" onclick="cancelOffer(${o.id})">CANCEL</button></td>
+          </tr>`
+        ).join('')
+      : '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">No active offers.</td></tr>';
+  } catch (e) {
+    receivedBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">Could not load offers.</td></tr>';
+    myOffersBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">Could not load your offers.</td></tr>';
+  }
+}
+
+async function acceptOffer(tokenId, from, price) {
+  if (!requireWallet()) return;
+
+  try {
+    const signer = await getSigner();
+    await ensureMarketApprovalForNFT(tokenId, signer);
+
+    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+
+    setStatus('Accepting offer for Milady #' + String(tokenId).padStart(4,'0') + '...');
+    const tx = await market.acceptOffer(tokenId, from);
+    await tx.wait();
+
+    APP.totalVolume += Number(price);
+    APP.totalSales++;
+    await refreshMarketplace();
+
+    setStatus('✓ Accepted offer of ' + price + ' pathUSD for Milady #' + String(tokenId).padStart(4,'0'));
+    addActivity('Milady #' + String(tokenId).padStart(4,'0'), Number(price), 'SALE');
+    await loadOffers();
+  } catch (e) {
+    setStatus('⚠ ' + (e.reason || e.shortMessage || e.message || 'Accept failed'));
+  }
+}
+
+async function cancelOffer(tokenId) {
+  if (!requireWallet()) return;
+
+  try {
+    const signer = await getSigner();
+    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+
+    setStatus('Cancelling offer on Milady #' + String(tokenId).padStart(4,'0') + '...');
+    const tx = await market.cancelOffer(tokenId);
+    await tx.wait();
+
+    setStatus('✓ Offer cancelled on Milady #' + String(tokenId).padStart(4,'0'));
+    await loadOffers();
+  } catch (e) {
+    setStatus('⚠ ' + (e.reason || e.shortMessage || e.message || 'Cancel offer failed'));
+  }
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.modal-overlay').forEach(m =>
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); })
+  );
+});
+
+function setStatus(msg) { document.getElementById('status-text').textContent = msg; }
+
 window.addEventListener('load', () => {
   setTimeout(() => window.dispatchEvent(new Event('eip6963:requestProvider')), 500);
   fetchMintedCount();
@@ -2072,17 +2112,31 @@ window.addEventListener('load', () => {
 
   setTimeout(async () => {
     const eth = window.ethereum;
-    if (!eth) return;
+    if (!eth) {
+      updateWalletUI();
+      renderGrid('listed');
+      return;
+    }
     try {
       const accounts = await eth.request({ method: 'eth_accounts' });
-      if (accounts.length > 0) connectWithProvider(eth);
-    } catch {}
+      if (accounts.length > 0) {
+        await connectWithProvider(eth);
+        await refreshMarketplace();
+      } else {
+        APP.ethersProvider = new ethers.BrowserProvider(eth);
+        await refreshMarketplace();
+      }
+    } catch {
+      try {
+        APP.ethersProvider = new ethers.BrowserProvider(window.ethereum);
+        await refreshMarketplace();
+      } catch {}
+    }
   }, 800);
 
   updateWalletUI();
-  loadListings();
+  renderGrid('listed');
 });
 </script>
-
 </body>
 </html>
