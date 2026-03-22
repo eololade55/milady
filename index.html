@@ -1147,6 +1147,2361 @@
   <div class="modal-win">
     <div class="modal-title-bar">📋 List Your Milady <button class="modal-x" onclick="closeModal('list-modal')">✕</button></div>
     <div class="modal-body">
+      <label class="modal-lbl">Select Milady</label>
+      <select class="modal-input" id="list-nft-select" style="font-family:'Courier New',monospace">
+        <option value="">Loading your Miladys...</option>
+      </select>
+      <div id="list-nft-preview" style="margin:8px 0;text-align:center;display:none">
+        <img id="list-nft-img" src="" style="width:80px;height:80px;object-fit:cover;border:2px solid #ccc" />
+      </div>
+      <label class="modal-lbl">Price (pathUSD)</label>
+      <input class="modal-input" type="number" id="list-price" placeholder="e.g. 10" min="0.01" step="0.01" />
+      <br /><br />
+      <button class="btn-mint" onclick="submitListing()">LIST FOR SALE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SWEEP MODAL ====== -->
+<div class="modal-overlay" id="sweep-modal">
+  <div class="modal-win">
+    <div class="modal-title-bar">🧹 Sweep Floor <button class="modal-x" onclick="closeModal('sweep-modal')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:12px;margin-bottom:0.7em">Buy multiple floor-priced Miladys in one gas-optimized transaction. Max 20 per sweep.</p>
+      <label class="modal-lbl">Number to sweep (max 20)</label>
+      <input class="modal-input" type="number" id="sweep-count" placeholder="e.g. 5" min="1" max="20" />
+      <div id="sweep-info" style="font-family:'Courier New',monospace;font-size:12px;background:#ffffcc;border:1px solid #ccc;padding:4px 8px;margin-top:8px">
+        FLOOR: — USD &nbsp; | &nbsp; TOTAL: — USD
+      </div>
+      <br />
+      <button class="btn-mint" onclick="executeSweep()">EXECUTE SWEEP</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ====== WALLET MODAL (AGENT-style EIP-6963) ====== -->
+<div class="wallet-overlay" id="wallet-overlay" onclick="handleOverlayClick(event)">
+  <div class="wallet-modal-win">
+    <div class="wallet-modal-header">
+      <span class="wallet-modal-label">SELECT WALLET</span>
+      <button class="wallet-modal-x" onclick="closeWalletModal()">✕</button>
+    </div>
+    <div class="wallet-list" id="wallet-list">
+      <div style="padding:20px;text-align:center;color:#888;font-size:11px">Scanning for wallets...</div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="led off" id="led"></div>
+  <span id="status-text">Not connected — Click CONNECT WALLET to begin</span>
+</div>
+
+<style>
+  /* ── Wallet overlay (AGENT-style) ── */
+  .wallet-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 2000;
+    align-items: center; justify-content: center;
+  }
+  .wallet-overlay.open { display: flex; }
+
+  .wallet-modal-win {
+    background: #fff; border: 2px solid #000;
+    width: 340px; max-width: 92vw;
+    box-shadow: 4px 4px 0 #000;
+    font-family: "Courier New", Courier, monospace;
+  }
+
+  .wallet-modal-header {
+    background: #4a5e2a; color: #fff;
+    padding: 6px 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11px; font-weight: bold; letter-spacing: 0.12em;
+  }
+
+  .wallet-modal-x {
+    background: #c0c0c0; border: 2px outset #fff;
+    font-weight: bold; width: 18px; height: 18px;
+    cursor: pointer; font-size: 11px; padding: 0; line-height: 1; color: #000;
+  }
+  .wallet-modal-x:active { border: 2px inset #fff; }
+
+  .wallet-list { padding: 8px; }
+
+  .wallet-divider {
+    padding: 6px 10px; font-size: 10px; letter-spacing: 0.15em;
+    text-transform: uppercase; color: #666;
+  }
+
+  .wallet-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; cursor: pointer;
+    border: 1px solid transparent; transition: all 0.15s;
+    margin-bottom: 2px;
+  }
+
+  .wallet-item:hover {
+    background: #f0f5e8; border-color: #4a5e2a;
+  }
+
+  .wallet-icon {
+    width: 34px; height: 34px; border-radius: 6px;
+    background: #eee; border: 1px solid #ccc;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0; overflow: hidden;
+  }
+
+  .wallet-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; }
+
+  .wallet-name { font-size: 13px; font-weight: bold; color: #000; }
+  .wallet-badge { font-size: 9px; color: #4a5e2a; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 1px; }
+</style>
+
+<!-- ethers.js v6 — same CDN as AGENT -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// TEMPO MILADY — CONFIG
+// ═══════════════════════════════════════════════════════
+const NFT_CONTRACT    = '0xef867e3cB2d3B79FC300c7E08DC12FA68a39Ae9A';
+const MARKET_CONTRACT = '0x476fAC9189bc92C7451dfD86737DAf9326b96014';
+const PATHUSD_ADDR    = '0x20c0000000000000000000000000000000000000';
+const TEMPO_CHAIN_ID  = 4217;       // Tempo Mainnet chain ID
+const TEMPO_CHAIN_HEX = '0x1079';
+const TEMPO_NETWORK = {
+  chainId:           TEMPO_CHAIN_HEX,
+  chainName:         'Tempo Mainnet',
+  nativeCurrency:    { name: 'USDC', symbol: 'USDC', decimals: 6 },
+  rpcUrls:           ['https://rpc.tempo.xyz'],
+  blockExplorerUrls: ['https://explore.tempo.xyz'],
+};
+
+const ERC20_ABI = [
+  'function balanceOf(address) view returns (uint256)',
+  'function allowance(address,address) view returns (uint256)',
+  'function approve(address,uint256) returns (bool)',
+];
+
+const NFT_ABI = [
+  'function balanceOf(address) view returns (uint256)',
+  'function ownerOf(uint256) view returns (address)',
+  'function tokenOfOwnerByIndex(address,uint256) view returns (uint256)',
+  'function totalSupply() view returns (uint256)',
+  'function isApprovedForAll(address,address) view returns (bool)',
+  'function setApprovalForAll(address,bool) returns ()',
+  'function mint(uint256) external',
+  'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)',
+];
+
+// Adjust function names to match your actual marketplace contract
+const MARKET_ABI = [
+  'function createListing(uint256 tokenId, uint256 price) external',
+  'function cancelListing(uint256 tokenId) external',
+  'function buyListing(uint256 tokenId) external',
+  'function makeOffer(uint256 tokenId, uint256 price, uint256 duration) external',
+  'function cancelOffer(uint256 tokenId) external',
+  'function acceptOffer(uint256 tokenId, address offerer) external',
+  'function getListing(uint256 tokenId) view returns (address seller, uint256 price, bool active)',
+  'function getOffer(uint256 tokenId, address offerer) view returns (uint256 price, uint256 expiry, bool active)',
+  'event ItemListed(address indexed seller, uint256 indexed tokenId, uint256 price)',
+  'event ItemSold(address indexed seller, address indexed buyer, uint256 indexed tokenId, uint256 price)',
+  'event ListingCancelled(address indexed seller, uint256 indexed tokenId)',
+  'event OfferMade(address indexed offerer, uint256 indexed tokenId, uint256 price, uint256 expiry)',
+  'event OfferAccepted(address indexed seller, address indexed offerer, uint256 indexed tokenId, uint256 price)',
+  'event OfferCancelled(address indexed offerer, uint256 indexed tokenId)',
+];
+
+function nftImageUrl(id) {
+  return `https://tempomilady.xyz/pngs/${id}.png`;
+}
+
+function setNftImage(el, id, emoji, bg) {
+  const url = nftImageUrl(id);
+  if (url) {
+    el.innerHTML = '';
+    el.style.background = bg || '#e0e0f0';
+    el.style.padding = '0';
+    const img = document.createElement('img');
+    img.src = url;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+    img.onerror = () => { el.innerHTML = ''; el.style.padding = ''; el.textContent = emoji; };
+    el.appendChild(img);
+  } else {
+    el.innerHTML = '';
+    el.style.padding = '';
+    el.style.background = bg || '#e0e0f0';
+    el.textContent = emoji;
+  }
+}
+// ── App State ────────────────────────────────────────────
+const APP = {
+  walletAddress:  null,
+  activeProvider: null,
+  ethersProvider: null,
+  mintQty:    1,
+  mintedCount: 0,
+  listings:   [],
+  totalVolume: 0,
+  totalSales: 0,
+  currentTab: 'listed'
+};
+
+const MINT_PRICE = 0.4;
+const TOTAL      = 10000;
+const EMOJIS     = ['🌸','🎀','✨','🌺','🌙','💫','🦋','🌷','🌼','💖','🍒','🌟'];
+const GRADES     = [
+  {g:'SS',c:'#cc0000',d:6},{g:'S',c:'#cc7700',d:5},
+  {g:'A',c:'#990099',d:4},{g:'B',c:'#0000cc',d:3},
+  {g:'C',c:'#007700',d:2},{g:'D',c:'#666',d:1}
+];
+const BGS = ['#e8e8f8','#f8e8e8','#e8f8e8','#f8f8e8','#f0e8f8'];
+
+// ── EIP-6963 wallet detection ────────────────────────────
+const injectedWallets = new Map();
+
+window.addEventListener('eip6963:announceProvider', (e) => {
+  const { info, provider } = e.detail;
+  injectedWallets.set(info.uuid, { info, provider });
+});
+
+window.dispatchEvent(new Event('eip6963:requestProvider'));
+
+// ── Wallet Modal ─────────────────────────────────────────
+function openWalletModal() {
+  if (APP.walletAddress) {
+    // Already connected — show disconnect option
+    disconnectWallet();
+    return;
+  }
+  renderWalletList();
+  document.getElementById('wallet-overlay').classList.add('open');
+}
+
+function closeWalletModal() {
+  document.getElementById('wallet-overlay').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('wallet-overlay')) closeWalletModal();
+}
+
+function renderWalletList() {
+  const list = document.getElementById('wallet-list');
+  list.innerHTML = '';
+
+  // Gather EIP-6963 detected wallets
+  let detected = Array.from(injectedWallets.values());
+
+  // Fallback to window.ethereum if no EIP-6963 wallets announced yet
+  if (detected.length === 0 && window.ethereum) {
+    detected.push({
+      info: {
+        uuid: 'injected',
+        name: window.ethereum.isMetaMask ? 'MetaMask' : 'Injected Wallet',
+        icon: '',
+      },
+      provider: window.ethereum,
+    });
+  }
+
+  if (detected.length > 0) {
+    const lbl = document.createElement('div');
+    lbl.className = 'wallet-divider';
+    lbl.textContent = 'Detected';
+    list.appendChild(lbl);
+
+    detected.forEach(({ info, provider }) => {
+      list.appendChild(makeWalletItem(info.name, info.icon, 'Detected', () => {
+        connectWithProvider(provider);
+        closeWalletModal();
+      }));
+    });
+  } else {
+    // Nothing detected — show install links
+    const lbl = document.createElement('div');
+    lbl.className = 'wallet-divider';
+    lbl.textContent = 'No wallets detected — install one:';
+    list.appendChild(lbl);
+
+    [
+      { name: 'MetaMask',     url: 'https://metamask.io',      icon: 'https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg' },
+      { name: 'Rabby Wallet', url: 'https://rabby.io',          icon: '' },
+      { name: 'OKX Wallet',   url: 'https://www.okx.com/web3', icon: '' },
+    ].forEach(w => {
+      list.appendChild(makeWalletItem(w.name, w.icon, 'Install →', () => window.open(w.url, '_blank')));
+    });
+  }
+}
+
+function makeWalletItem(name, iconUrl, badge, onClick) {
+  const item = document.createElement('div');
+  item.className = 'wallet-item';
+  item.onclick = onClick;
+
+  const icon = document.createElement('div');
+  icon.className = 'wallet-icon';
+  if (iconUrl) {
+    const img = document.createElement('img');
+    img.src = iconUrl;
+    img.onerror = () => { icon.innerHTML = ''; icon.textContent = name[0]; };
+    icon.appendChild(img);
+  } else {
+    icon.textContent = name[0];
+  }
+
+  const info = document.createElement('div');
+  info.innerHTML = `<div class="wallet-name">${name}</div><div class="wallet-badge">${badge}</div>`;
+
+  item.appendChild(icon);
+  item.appendChild(info);
+  return item;
+}
+
+// ── Connect / Disconnect ─────────────────────────────────
+async function connectWithProvider(provider) {
+  try {
+    const accounts = await provider.request({ method: 'eth_requestAccounts' });
+    if (!accounts || !accounts.length) throw new Error('No accounts returned');
+
+    APP.activeProvider = provider;
+    APP.ethersProvider = new ethers.BrowserProvider(provider);
+
+    await switchToTempo(provider);
+
+    APP.walletAddress = accounts[0];
+
+    provider.on('accountsChanged', (accs) => {
+      if (!accs.length) { disconnectWallet(); return; }
+      APP.walletAddress  = accs[0];
+      APP.ethersProvider = new ethers.BrowserProvider(provider);
+      updateWalletUI();
+    });
+
+    provider.on('chainChanged', () => window.location.reload());
+
+    updateWalletUI();
+  } catch (e) {
+    setStatus('⚠ ' + (e.code === 4001 ? 'Connection rejected' : (e.message || 'Connection failed')));
+  }
+}
+
+async function switchToTempo(provider) {
+  try {
+    await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: TEMPO_CHAIN_HEX }] });
+  } catch (e) {
+    if (e.code === 4902 || e.code === -32603) {
+      try { await provider.request({ method: 'wallet_addEthereumChain', params: [TEMPO_NETWORK] }); }
+      catch {}
+    }
+  }
+}
+
+function disconnectWallet() {
+  APP.walletAddress  = null;
+  APP.activeProvider = null;
+  APP.ethersProvider = null;
+  updateWalletUI();
+}
+
+function truncAddr(a) { return a ? a.slice(0,6) + '...' + a.slice(-4) : ''; }
+
+// ── UI updates after connect/disconnect ──────────────────
+function updateWalletUI() {
+  const btn    = document.getElementById('wallet-btn');
+  const mintBtn = document.getElementById('mint-btn');
+  const led    = document.getElementById('led');
+
+  if (APP.walletAddress) {
+    btn.textContent   = truncAddr(APP.walletAddress);
+    btn.style.fontSize = '11px';
+    if (mintBtn) mintBtn.textContent = 'MINT NOW';
+    led.classList.remove('off');
+    setStatus('Connected: ' + truncAddr(APP.walletAddress) + ' — Tempo chain');
+  } else {
+    btn.textContent   = 'CONNECT WALLET';
+    btn.style.fontSize = '';
+    if (mintBtn) mintBtn.textContent = 'CONNECT WALLET TO MINT';
+    led.classList.add('off');
+    setStatus('Not connected — Click CONNECT WALLET to begin');
+  }
+}
+
+function requireWallet() {
+  if (!APP.walletAddress) { openWalletModal(); return false; }
+  return true;
+}
+
+// ── Navigation ───────────────────────────────────────────
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn[id^="nav-"]').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const btn = document.getElementById('nav-' + page);
+  if (btn) btn.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ── Mint ─────────────────────────────────────────────────
+function setQty(val) {
+  const n = Math.min(100, Math.max(1, parseInt(val) || 1));
+  APP.mintQty = n;
+  document.getElementById('qty-display').value = n;
+  document.getElementById('total-price').textContent = (n * MINT_PRICE).toFixed(1);
+}
+
+function changeQty(d) {
+  setQty(APP.mintQty + d);
+  const previewId = Math.floor(Math.random() * 9999) + 1;
+  const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+  document.getElementById('mint-next-id').textContent = '#' + String(previewId).padStart(4,'0');
+  setNftImage(document.getElementById('mint-preview'), previewId, emoji, '#e0e0f0');
+}
+
+async function handleMint() {
+  if (!requireWallet()) return;
+
+  // Switch chain if needed
+  if (APP.ethersProvider) {
+    const net = await APP.ethersProvider.getNetwork().catch(() => null);
+    if (net && Number(net.chainId) !== TEMPO_CHAIN_ID) {
+      await switchToTempo(APP.activeProvider);
+      return;
+    }
+  }
+
+  const btn = document.getElementById('mint-btn');
+  btn.disabled = true; btn.textContent = 'MINTING...';
+  setStatus('Waiting for wallet confirmation...');
+
+  // TODO: Replace timeout with real contract call:
+  // const signer  = await APP.ethersProvider.getSigner();
+  // const pathusd = new ethers.Contract(PATHUSD_ADDR, ERC20_ABI, signer);
+  // const price   = ethers.parseUnits((APP.mintQty * MINT_PRICE).toString(), 6);
+  // const allowance = await pathusd.allowance(APP.walletAddress, NFT_CONTRACT);
+  // if (BigInt(allowance) < price) await (await pathusd.approve(NFT_CONTRACT, price)).wait();
+  // const contract = new ethers.Contract(NFT_CONTRACT, MINT_ABI, signer);
+  // const tx = await contract.mint(APP.mintQty);
+  // await tx.wait();
+
+const signer   = await APP.ethersProvider.getSigner();
+const pathusd  = new ethers.Contract(PATHUSD_ADDR, ERC20_ABI, signer);
+const price    = ethers.parseUnits((APP.mintQty * MINT_PRICE).toFixed(6), 6);
+
+const allowance = await pathusd.allowance(APP.walletAddress, NFT_CONTRACT);
+if (BigInt(allowance) < BigInt(price)) {
+  btn.textContent = 'APPROVING...';
+  await (await pathusd.approve(NFT_CONTRACT, price)).wait();
+}
+
+btn.textContent = 'CONFIRM IN WALLET...';
+const contract = new ethers.Contract(NFT_CONTRACT, ['function mint(uint256 qty) external'], signer);
+const tx = await contract.mint(APP.mintQty);
+btn.textContent = 'CONFIRMING...';
+await tx.wait();
+
+APP.mintedCount += APP.mintQty;
+document.getElementById('mint-bar').style.width = (APP.mintedCount / TOTAL * 100) + '%';
+document.getElementById('mint-label').textContent = APP.mintedCount.toLocaleString() + ' / 10,000 MINTED';
+btn.disabled = false; btn.textContent = 'MINT NOW';
+setStatus('✓ Minted ' + APP.mintQty + ' Milady' + (APP.mintQty > 1 ? 's' : '') + '! Check your wallet.');
+}
+
+// ── Marketplace ──────────────────────────────────────────
+function switchTab(tab, el) {
+  APP.currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+
+  document.getElementById('market-content').style.display   = 'none';
+  document.getElementById('items-section').style.display    = 'none';
+  document.getElementById('mine-section').style.display     = 'none';
+  document.getElementById('offers-section').style.display   = 'none';
+  document.getElementById('activity-section').style.display = 'none';
+
+  if (tab === 'listed') {
+    document.getElementById('market-content').style.display = 'block';
+    loadListings();
+  } else if (tab === 'items') {
+    document.getElementById('items-section').style.display = 'block';
+    loadAllItems();
+  } else if (tab === 'mine') {
+    document.getElementById('mine-section').style.display = 'block';
+    loadMyNFTs();
+  } else if (tab === 'offers') {
+    document.getElementById('offers-section').style.display = 'block';
+    loadOffers();
+  } else if (tab === 'activity') {
+    document.getElementById('activity-section').style.display = 'block';
+    loadActivity();
+  }
+}
+
+// ── All Items — every minted NFT with offer button ────────
+APP.itemsPage = 1;
+
+function itemsPageChange(dir) {
+  const perPage   = parseInt(document.getElementById('items-per-page').value) || 50;
+  const total     = APP.mintedCount || 0;
+  const maxPage   = Math.max(1, Math.ceil(total / perPage));
+  APP.itemsPage   = Math.min(maxPage, Math.max(1, APP.itemsPage + dir));
+  renderAllItems();
+}
+
+async function loadAllItems() {
+  const grid = document.getElementById('all-items-grid');
+
+  // Get latest minted count
+  try {
+    const nft    = new ethers.Contract(NFT_CONTRACT, NFT_ABI,
+      APP.ethersProvider || new ethers.JsonRpcProvider('https://rpc.tempo.xyz'));
+    const supply = Number(await nft.totalSupply());
+    APP.mintedCount = supply;
+  } catch {}
+
+  APP.itemsPage = 1;
+  renderAllItems();
+}
+
+function renderAllItems() {
+  const grid    = document.getElementById('all-items-grid');
+  const total   = APP.mintedCount || 0;
+  const perPage = parseInt(document.getElementById('items-per-page').value) || 50;
+  const page    = APP.itemsPage;
+  const maxPage = Math.max(1, Math.ceil(total / perPage));
+
+  document.getElementById('items-page-label').textContent = page;
+  document.getElementById('items-total-label').textContent =
+    '— ' + total.toLocaleString() + ' total, page ' + page + ' of ' + maxPage;
+
+  if (total === 0) {
+    grid.innerHTML = '<div class="empty-box">No Miladys minted yet.</div>';
+    return;
+  }
+
+  const start = (page - 1) * perPage + 1;
+  const end   = Math.min(total, start + perPage - 1);
+  const ids   = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+
+  // Build listed price map for quick lookup
+  const listedMap = {};
+  APP.listings.forEach(l => { listedMap[l.id] = l.price; });
+
+  grid.innerHTML = '<div class="nft-grid">' + ids.map(id => {
+    const listed = listedMap[id];
+    return `<div class="nft-card">
+      <div class="nft-card-img" style="background:#e8e8f8;padding:0;overflow:hidden">
+        <img src="https://tempomilady.xyz/pngs/${id}.png"
+          style="width:100%;height:100%;object-fit:cover;display:block"
+          onerror="this.style.display='none'" />
+      </div>
+      <div class="nft-card-body">
+        <div class="nft-card-id">Milady #${String(id).padStart(4,'0')}</div>
+        <div class="nft-card-row">
+          <span class="nft-card-price" style="font-size:11px;color:${listed ? '#007700' : '#888'}">
+            ${listed ? listed + ' USD' : 'Not listed'}
+          </span>
+        </div>
+        ${listed
+          ? `<button class="nft-buy-btn" style="display:block" onclick="event.stopPropagation();buyNFT(${id},${listed})">BUY NOW</button>`
+          : ''
+        }
+        <button class="nft-buy-btn" style="display:block;background:#555;border-color:#444;margin-top:2px"
+          onclick="event.stopPropagation();openOfferModal(${id},${listed || 0})">MAKE OFFER</button>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+// ── Load all listings from marketplace contract ───────────
+// ── Paginated log fetcher (handles 100k block limit) ─────
+async function getPaginatedLogs(contract, filter, provider) {
+  const MAX_RANGE  = 90000; // stay under 100k limit
+  const latest     = await provider.getBlockNumber();
+  const deployBlock = 0;   // set to your contract deploy block to speed up
+  const results    = [];
+
+  for (let from = deployBlock; from <= latest; from += MAX_RANGE) {
+    const to = Math.min(from + MAX_RANGE - 1, latest);
+    try {
+      const logs = await contract.queryFilter(filter, from, to);
+      results.push(...logs);
+    } catch (e) {
+      console.warn('Log fetch error for range', from, '-', to, e.message);
+    }
+  }
+  return results;
+}
+
+async function loadListings() {
+  const c = document.getElementById('market-content');
+  if (!APP.ethersProvider) {
+    c.innerHTML = '<div class="empty-box">🌸 Connect wallet to load listings.</div>';
+    return;
+  }
+  try {
+    c.innerHTML = '<div class="empty-box">Loading listings...</div>';
+    const market    = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, APP.ethersProvider);
+    const provider  = APP.ethersProvider;
+
+    const [listed, sold, cancelled] = await Promise.all([
+      getPaginatedLogs(market, market.filters.ItemListed(), provider),
+      getPaginatedLogs(market, market.filters.ItemSold(),   provider),
+      getPaginatedLogs(market, market.filters.ListingCancelled(), provider),
+    ]);
+
+    const soldIds      = new Set(sold.map(e => Number(e.args.tokenId)));
+    const cancelledIds = new Set(cancelled.map(e => Number(e.args.tokenId)));
+
+    const active = listed.filter(e => {
+      const id = Number(e.args.tokenId);
+      return !soldIds.has(id) && !cancelledIds.has(id);
+    });
+
+    if (!active.length) {
+      c.innerHTML = '<div class="empty-box">🌸 No Miladys listed yet. Be the first to list yours.</div>';
+      APP.listings = [];
+      updateMarketStats();
+      return;
+    }
+
+    APP.listings = active.map(e => ({
+      id:     Number(e.args.tokenId),
+      price:  Number(ethers.formatUnits(e.args.price, 6)),
+      seller: e.args.seller
+    }));
+    updateMarketStats();
+    renderGridFromData(APP.listings);
+    if (APP.currentTab === 'items') renderAllItems();
+  } catch (e) {
+    console.error('loadListings:', e);
+    c.innerHTML = '<div class="empty-box">⚠ Could not load listings: ' + (e.message || 'error') + '</div>';
+  }
+}
+
+function renderGridFromData(listings) {
+  const c = document.getElementById('market-content');
+  if (!listings.length) {
+    c.innerHTML = '<div class="empty-box">🌸 No Miladys listed yet.</div>';
+    return;
+  }
+  c.innerHTML = '<div class="nft-grid">' + listings.map(l =>
+    `<div class="nft-card">
+      <div class="nft-card-img" style="background:#e8e8f8;padding:0;overflow:hidden">
+        <img src="https://tempomilady.xyz/pngs/${l.id}.png"
+          style="width:100%;height:100%;object-fit:cover;display:block"
+          onerror="this.style.display='none'" />
+      </div>
+      <div class="nft-card-body">
+        <div class="nft-card-id">Milady #${String(l.id).padStart(4,"0")}</div>
+        <div class="nft-card-row">
+          <span class="nft-card-price">${l.price} USD</span>
+        </div>
+        <button class="nft-buy-btn" style="display:block" onclick="event.stopPropagation();buyNFT(${l.id},${l.price})">BUY NOW</button>
+        <button class="nft-buy-btn" style="display:block;background:#555;border-color:#444;margin-top:2px" onclick="event.stopPropagation();openOfferModal(${l.id},${l.price})">MAKE OFFER</button>
+      </div>
+    </div>`
+  ).join('') + '</div>';
+}
+
+function sortListings(val) {
+  const L = APP.listings;
+  if (val === 'price-asc')  L.sort((a,b) => a.price - b.price);
+  if (val === 'price-desc') L.sort((a,b) => b.price - a.price);
+  if (val === 'id-asc')     L.sort((a,b) => a.id - b.id);
+  renderGridFromData(L);
+}
+
+function renderGrid() { loadListings(); }
+
+// ── Buy NFT ───────────────────────────────────────────────
+async function buyNFT(id, price) {
+  if (!requireWallet()) return;
+  try {
+    const signer   = await APP.ethersProvider.getSigner();
+    const pathusd  = new ethers.Contract(PATHUSD_ADDR, ERC20_ABI, signer);
+    const market   = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+    const priceWei = ethers.parseUnits(price.toString(), 6);
+
+    const allowance = await pathusd.allowance(APP.walletAddress, MARKET_CONTRACT);
+    if (BigInt(allowance) < BigInt(priceWei)) {
+      setStatus('Approving pathUSD...');
+      await (await pathusd.approve(MARKET_CONTRACT, priceWei)).wait();
+    }
+    setStatus('Confirm purchase in wallet...');
+    const tx = await market.buyListing(id);
+    setStatus('Confirming...');
+    await tx.wait();
+
+    APP.totalVolume += price; APP.totalSales++;
+    setStatus('✓ Purchased Milady #' + String(id).padStart(4,'0') + ' for ' + price + ' pathUSD');
+    loadListings();
+    updateMarketStats();
+  } catch (e) {
+    setStatus('⚠ ' + (e.reason || e.message || 'Purchase failed'));
+  }
+}
+
+// ── List NFT ──────────────────────────────────────────────
+async function openList() {
+  if (!requireWallet()) return;
+  await populateListModal(null);
+  document.getElementById('list-price').value = '';
+  document.getElementById('list-modal').classList.add('open');
+}
+
+async function openListFromNFT(id) {
+  if (!requireWallet()) return;
+  await populateListModal(id);
+  document.getElementById('list-price').value = '';
+  document.getElementById('list-modal').classList.add('open');
+}
+
+async function populateListModal(preselect) {
+  const sel = document.getElementById('list-nft-select');
+  sel.innerHTML = '<option value="">Loading your Miladys...</option>';
+  document.getElementById('list-nft-preview').style.display = 'none';
+
+  try {
+    // Use cached myNFTs if available, else fetch
+    let ids = APP.myNFTs;
+    if (!ids || !ids.length) {
+      const nft     = new ethers.Contract(NFT_CONTRACT, NFT_ABI, APP.ethersProvider);
+      const balance = Number(await nft.balanceOf(APP.walletAddress));
+      if (balance === 0) {
+        sel.innerHTML = '<option value="">You don\'t own any Miladys</option>';
+        return;
+      }
+      ids = await Promise.all(
+        Array.from({ length: balance }, (_, i) =>
+          nft.tokenOfOwnerByIndex(APP.walletAddress, i).then(Number)
+        )
+      );
+      APP.myNFTs = ids;
+    }
+
+    const listedIds = new Set(APP.listings.map(l => l.id));
+    // Filter out already listed
+    const unlisted = ids.filter(id => !listedIds.has(id));
+
+    if (!unlisted.length) {
+      sel.innerHTML = '<option value="">All your Miladys are already listed</option>';
+      return;
+    }
+
+    sel.innerHTML = unlisted.map(id =>
+      `<option value="${id}"${preselect === id ? ' selected' : ''}>Milady #${String(id).padStart(4,'0')}</option>`
+    ).join('');
+
+    // Show preview of selected token
+    updateListPreview();
+    sel.onchange = updateListPreview;
+  } catch (e) {
+    sel.innerHTML = '<option value="">⚠ Could not load NFTs</option>';
+    console.error('populateListModal:', e);
+  }
+}
+
+function updateListPreview() {
+  const sel = document.getElementById('list-nft-select');
+  const id  = parseInt(sel.value);
+  const preview = document.getElementById('list-nft-preview');
+  const img     = document.getElementById('list-nft-img');
+  if (id) {
+    img.src = `https://tempomilady.xyz/pngs/${id}.png`;
+    preview.style.display = 'block';
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+async function submitListing() {
+  if (!requireWallet()) return;
+  const id    = parseInt(document.getElementById('list-nft-select').value);
+  const price = parseFloat(document.getElementById('list-price').value);
+  if (!id) { setStatus('⚠ Select a Milady to list'); return; }
+  if (!price || price <= 0) { setStatus('⚠ Enter a valid price'); return; }
+
+  try {
+    const signer = await APP.ethersProvider.getSigner();
+    const nft    = new ethers.Contract(NFT_CONTRACT, NFT_ABI, signer);
+    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+
+    // Verify ownership
+    const owner = await nft.ownerOf(id);
+    if (owner.toLowerCase() !== APP.walletAddress.toLowerCase()) {
+      setStatus('⚠ You do not own Milady #' + String(id).padStart(4,'0')); return;
+    }
+
+    // Approve marketplace if needed
+    const approved = await nft.isApprovedForAll(APP.walletAddress, MARKET_CONTRACT);
+    if (!approved) {
+      setStatus('Approving marketplace...');
+      await (await nft.setApprovalForAll(MARKET_CONTRACT, true)).wait();
+    }
+
+    const priceWei = ethers.parseUnits(price.toFixed(6), 6);
+    setStatus('Confirm listing in wallet...');
+    await (await market.createListing(id, priceWei)).wait();
+
+    closeModal('list-modal');
+    setStatus('✓ Listed Milady #' + String(id).padStart(4,'0') + ' for ' + price + ' pathUSD');
+    loadListings();
+    if (APP.currentTab === 'mine') loadMyNFTs();
+  } catch (e) {
+    setStatus('⚠ ' + (e.reason || e.message || 'Listing failed'));
+  }
+}
+
+async function cancelListing(id) {
+  if (!requireWallet()) return;
+  try {
+    const signer = await APP.ethersProvider.getSigner();
+    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+    setStatus('Confirm cancel in wallet...');
+    await (await market.cancelListing(id)).wait();
+    setStatus('✓ Listing cancelled for Milady #' + String(id).padStart(4,'0'));
+    loadListings();
+    loadMyNFTs();
+  } catch (e) {
+    setStatus('⚠ ' + (e.reason || e.message || 'Cancel failed'));
+  }
+}
+
+// ── Sweep ─────────────────────────────────────────────────
+function openSweep() {
+  if (!requireWallet()) return;
+  const L     = APP.listings;
+  const floor = L.length ? Math.min(...L.map(l => l.price)) : 0;
+  document.getElementById('sweep-info').textContent = 'FLOOR: ' + (floor ? floor + ' USD' : '— USD') + '   |   Enter qty to calculate total';
+  document.getElementById('sweep-modal').classList.add('open');
+}
+
+async function executeSweep() {
+  if (!requireWallet()) return;
+  const L     = APP.listings;
+  const count = Math.min(parseInt(document.getElementById('sweep-count').value) || 1, 20);
+  if (!L.length) { setStatus('⚠ No listings to sweep'); return; }
+  const toSweep = [...L].sort((a,b) => a.price - b.price).slice(0, Math.min(count, L.length));
+  const total   = toSweep.reduce((s,l) => s + l.price, 0);
+  try {
+    const signer   = await APP.ethersProvider.getSigner();
+    const pathusd  = new ethers.Contract(PATHUSD_ADDR, ERC20_ABI, signer);
+    const market   = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+    const totalWei = ethers.parseUnits(total.toFixed(6), 6);
+
+    const allowance = await pathusd.allowance(APP.walletAddress, MARKET_CONTRACT);
+    if (BigInt(allowance) < BigInt(totalWei)) {
+      setStatus('Approving pathUSD...');
+      await (await pathusd.approve(MARKET_CONTRACT, totalWei)).wait();
+    }
+    for (const l of toSweep) {
+      setStatus('Buying Milady #' + String(l.id).padStart(4,'0') + '...');
+      await (await market.buyListing(l.id)).wait();
+    }
+    APP.totalVolume += total; APP.totalSales += toSweep.length;
+    document.getElementById('sweep-modal').classList.remove('open');
+    setStatus('🧹 Swept ' + toSweep.length + ' Miladys for ' + total.toFixed(2) + ' pathUSD');
+    updateMarketStats();
+    loadListings();
+  } catch (e) {
+    setStatus('⚠ ' + (e.reason || e.message || 'Sweep failed'));
+  }
+}
+
+function updateMarketStats() {
+  const L = APP.listings;
+  document.getElementById('stat-listed').textContent  = L.length;
+  document.getElementById('stat-floor').textContent   = L.length ? Math.min(...L.map(l=>l.price)) + ' USD' : '— USD';
+  document.getElementById('stat-volume').textContent  = APP.totalVolume.toFixed(1) + ' USD';
+  document.getElementById('stat-sales').textContent   = APP.totalSales;
+}
+
+// ── My NFTs — multi-select + bulk list ───────────────────
+APP.selectedNFTs = new Set();
+
+async function loadMyNFTs() {
+  const grid = document.getElementById('my-nfts-grid');
+  APP.selectedNFTs.clear();
+  updateSelectionToolbar();
+
+  if (!APP.walletAddress) {
+    grid.innerHTML = '<div class="empty-box">Connect your wallet to see your Miladys.</div>';
+    return;
+  }
+  grid.innerHTML = '<div class="empty-box">Loading your Miladys...</div>';
+  try {
+    const nft     = new ethers.Contract(NFT_CONTRACT, NFT_ABI, APP.ethersProvider);
+    const balance = Number(await nft.balanceOf(APP.walletAddress));
+    if (balance === 0) {
+      grid.innerHTML = '<div class="empty-box">You don\'t own any Miladys yet. Mint one to get started!</div>';
+      return;
+    }
+    const ids = await Promise.all(
+      Array.from({ length: balance }, (_, i) =>
+        nft.tokenOfOwnerByIndex(APP.walletAddress, i).then(Number)
+      )
+    );
+    APP.myNFTs = ids;
+    renderMyNFTsGrid();
+    setStatus('Found ' + balance + ' Milady' + (balance > 1 ? 's' : '') + ' in your wallet');
+  } catch (e) {
+    console.error('loadMyNFTs:', e);
+    grid.innerHTML = '<div class="empty-box">⚠ Could not load NFTs: ' + (e.message || 'error') + '</div>';
+  }
+}
+
+function renderMyNFTsGrid() {
+  const grid      = document.getElementById('my-nfts-grid');
+  const ids       = APP.myNFTs || [];
+  const listedIds = new Set(APP.listings.map(l => l.id));
+
+  grid.innerHTML = '<div class="nft-grid">' + ids.map(id => {
+    const isListed  = listedIds.has(id);
+    const isSelected = APP.selectedNFTs.has(id);
+    return `<div class="nft-card${isSelected ? ' selected' : ''}" onclick="toggleSelectNFT(${id},this)" style="cursor:pointer">
+      <div class="nft-card-img" style="background:#e8e8f8;padding:0;overflow:hidden;position:relative">
+        <img src="https://tempomilady.xyz/pngs/${id}.png"
+          style="width:100%;height:100%;object-fit:cover;display:block"
+          onerror="this.style.display='none'" />
+        <span class="select-check">✓</span>
+      </div>
+      <div class="nft-card-body">
+        <div class="nft-card-id">Milady #${String(id).padStart(4,'0')}</div>
+        <div style="font-size:10px;color:${isListed ? '#007700' : '#888'};margin-top:2px">
+          ${isListed ? '● Listed' : '○ Not listed'}
+        </div>
+        <div style="margin-top:4px">
+          ${isListed
+            ? `<button class="nft-buy-btn" style="display:block;background:#888;border-color:#666;font-size:10px"
+                onclick="event.stopPropagation();cancelListing(${id})">CANCEL LISTING</button>`
+            : `<button class="nft-buy-btn" style="display:block;font-size:10px"
+                onclick="event.stopPropagation();openListFromNFT(${id})">LIST FOR SALE</button>`
+          }
+        </div>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+function toggleSelectNFT(id, cardEl) {
+  if (APP.selectedNFTs.has(id)) {
+    APP.selectedNFTs.delete(id);
+    cardEl.classList.remove('selected');
+  } else {
+    APP.selectedNFTs.add(id);
+    cardEl.classList.add('selected');
+  }
+  updateSelectionToolbar();
+}
+
+function updateSelectionToolbar() {
+  const toolbar = document.getElementById('selection-toolbar');
+  const count   = APP.selectedNFTs.size;
+  document.getElementById('selected-count').textContent = count + ' selected';
+  toolbar.style.display = count > 0 ? 'flex' : 'none';
+}
+
+function clearSelection() {
+  APP.selectedNFTs.clear();
+  updateSelectionToolbar();
+  renderMyNFTsGrid();
+}
+
+async function bulkList() {
+  if (!requireWallet()) return;
+  const ids   = Array.from(APP.selectedNFTs);
+  const price = parseFloat(document.getElementById('bulk-price').value);
+  if (!ids.length) { setStatus('⚠ Select at least one Milady'); return; }
+  if (!price || price <= 0) { setStatus('⚠ Enter a listing price'); return; }
+
+  try {
+    const signer = await APP.ethersProvider.getSigner();
+    const nft    = new ethers.Contract(NFT_CONTRACT, NFT_ABI, signer);
+    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+
+    // Approve marketplace once for all
+    const approved = await nft.isApprovedForAll(APP.walletAddress, MARKET_CONTRACT);
+    if (!approved) {
+      setStatus('Approving marketplace for all...');
+      await (await nft.setApprovalForAll(MARKET_CONTRACT, true)).wait();
+    }
+
+    const priceWei = ethers.parseUnits(price.toFixed(6), 6);
+
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      // Verify ownership before listing each
+      const owner = await nft.ownerOf(id);
+      if (owner.toLowerCase() !== APP.walletAddress.toLowerCase()) {
+        setStatus('⚠ You do not own Milady #' + String(id).padStart(4,'0') + ' — skipping');
+        continue;
+      }
+      setStatus('Listing ' + (i+1) + ' of ' + ids.length + ': Milady #' + String(id).padStart(4,'0') + '...');
+      await (await market.createListing(id, priceWei)).wait();
+    }
+
+    APP.selectedNFTs.clear();
+    updateSelectionToolbar();
+    setStatus('✓ Listed ' + ids.length + ' Milady' + (ids.length > 1 ? 's' : '') + ' for ' + price + ' pathUSD each');
+    document.getElementById('bulk-price').value = '';
+    loadListings();
+    loadMyNFTs();
+  } catch (e) {
+    setStatus('⚠ ' + (e.reason || e.message || 'Bulk list failed'));
+  }
+}
+
+// ── Offers ────────────────────────────────────────────────
+let offerTargetId = null;
+
+function openOfferModal(id, currentPrice) {
+  if (!requireWallet()) return;
+  offerTargetId = id;
+  document.getElementById('offer-token-info').textContent =
+    'Milady #' + String(id).padStart(4,'0') + '  |  Listed at: ' + currentPrice + ' pathUSD';
+  document.getElementById('offer-price').value = '';
+  document.getElementById('offer-modal').classList.add('open');
+}
+
+async function submitOffer() {
+  if (!requireWallet() || !offerTargetId) return;
+  const price  = parseFloat(document.getElementById('offer-price').value);
+  const expiry = parseInt(document.getElementById('offer-expiry').value);
+  if (!price || price <= 0) { setStatus('⚠ Enter a valid offer price'); return; }
+  try {
+    const signer   = await APP.ethersProvider.getSigner();
+    const pathusd  = new ethers.Contract(PATHUSD_ADDR, ERC20_ABI, signer);
+    const market   = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+    const priceWei = ethers.parseUnits(price.toFixed(6), 6);
+
+    const allowance = await pathusd.allowance(APP.walletAddress, MARKET_CONTRACT);
+    if (BigInt(allowance) < BigInt(priceWei)) {
+      setStatus('Approving pathUSD...');
+      await (await pathusd.approve(MARKET_CONTRACT, priceWei)).wait();
+    }
+    setStatus('Confirm offer in wallet...');
+    await (await market.makeOffer(offerTargetId, priceWei, expiry * 86400)).wait();
+    closeModal('offer-modal');
+    setStatus('✓ Offer of ' + price + ' pathUSD placed on Milady #' + String(offerTargetId).padStart(4,'0'));
+  } catch (e) {
+    setStatus('⚠ ' + (e.reason || e.message || 'Offer failed'));
+  }
+}
+
+async function loadOffers() {
+  const receivedBody = document.getElementById('offers-rows');
+  const myOffersBody = document.getElementById('my-offers-rows');
+  if (!APP.walletAddress || !APP.ethersProvider) {
+    receivedBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">Connect wallet to see offers.</td></tr>';
+    myOffersBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">Connect wallet to see your offers.</td></tr>';
+    return;
+  }
+  try {
+    const market      = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, APP.ethersProvider);
+    const provider    = APP.ethersProvider;
+    const [allOffers, accepted, cancelled] = await Promise.all([
+      getPaginatedLogs(market, market.filters.OfferMade(),      provider),
+      getPaginatedLogs(market, market.filters.OfferAccepted(),  provider),
+      getPaginatedLogs(market, market.filters.OfferCancelled(), provider),
+    ]);
+
+    const acceptedKeys  = new Set(accepted.map(e => `${Number(e.args.tokenId)}-${e.args.offerer.toLowerCase()}`));
+    const cancelledKeys = new Set(cancelled.map(e => `${Number(e.args.tokenId)}-${e.args.offerer.toLowerCase()}`));
+    const myNFTIds      = new Set(APP.myNFTs || []);
+
+    const received = allOffers.filter(e => {
+      const key = `${Number(e.args.tokenId)}-${e.args.offerer.toLowerCase()}`;
+      return myNFTIds.has(Number(e.args.tokenId)) && !acceptedKeys.has(key) && !cancelledKeys.has(key);
+    });
+
+    const myOffers = allOffers.filter(e => {
+      const key = `${Number(e.args.tokenId)}-${e.args.offerer.toLowerCase()}`;
+      return e.args.offerer.toLowerCase() === APP.walletAddress.toLowerCase()
+        && !acceptedKeys.has(key) && !cancelledKeys.has(key);
+    });
+
+    receivedBody.innerHTML = received.length
+      ? received.map(e => {
+          const id    = Number(e.args.tokenId);
+          const price = Number(ethers.formatUnits(e.args.price, 6));
+          const from  = e.args.offerer;
+          const exp   = new Date(Number(e.args.expiry) * 1000).toLocaleDateString();
+          return `<tr>
+            <td>Milady #${String(id).padStart(4,'0')}</td>
+            <td><b>${price} USD</b></td>
+            <td>${truncAddr(from)}</td>
+            <td>${exp}</td>
+            <td><button class="btn-act btn-act-primary" style="font-size:11px;padding:2px 8px" onclick="acceptOffer(${id},'${from}',${price})">ACCEPT</button></td>
+          </tr>`;
+        }).join('')
+      : '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">No offers received yet.</td></tr>';
+
+    myOffersBody.innerHTML = myOffers.length
+      ? myOffers.map(e => {
+          const id    = Number(e.args.tokenId);
+          const price = Number(ethers.formatUnits(e.args.price, 6));
+          const exp   = new Date(Number(e.args.expiry) * 1000).toLocaleDateString();
+          return `<tr>
+            <td>Milady #${String(id).padStart(4,'0')}</td>
+            <td><b>${price} USD</b></td>
+            <td>Pending</td>
+            <td>${exp}</td>
+            <td><button class="btn-act" style="font-size:11px;padding:2px 8px" onclick="cancelOffer(${id})">CANCEL</button></td>
+          </tr>`;
+        }).join('')
+      : '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">No active offers.</td></tr>';
+  } catch (e) {
+    console.error('loadOffers:', e);
+    receivedBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">⚠ Could not load offers.</td></tr>';
+  }
+}
+
+async function acceptOffer(tokenId, from, price) {
+  if (!requireWallet()) return;
+  try {
+    const signer = await APP.ethersProvider.getSigner();
+    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+    setStatus('Confirm accept in wallet...');
+    await (await market.acceptOffer(tokenId, from)).wait();
+    APP.totalVolume += price; APP.totalSales++;
+    updateMarketStats();
+    setStatus('✓ Accepted offer of ' + price + ' pathUSD for Milady #' + String(tokenId).padStart(4,'0'));
+    loadOffers();
+  } catch (e) {
+    setStatus('⚠ ' + (e.reason || e.message || 'Accept failed'));
+  }
+}
+
+async function cancelOffer(tokenId) {
+  if (!requireWallet()) return;
+  try {
+    const signer = await APP.ethersProvider.getSigner();
+    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+    setStatus('Confirm cancel in wallet...');
+    await (await market.cancelOffer(tokenId)).wait();
+    setStatus('✓ Offer cancelled on Milady #' + String(tokenId).padStart(4,'0'));
+    loadOffers();
+  } catch (e) {
+    setStatus('⚠ ' + (e.reason || e.message || 'Cancel failed'));
+  }
+}
+
+// ── Real Activity from chain ──────────────────────────────
+async function loadActivity() {
+  const tbody = document.getElementById('activity-rows');
+  if (!APP.ethersProvider) return;
+  try {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:1em">Loading...</td></tr>';
+    const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, APP.ethersProvider);
+    const provider = APP.ethersProvider;
+    const [sales, listings, offers] = await Promise.all([
+      getPaginatedLogs(market, market.filters.ItemSold(),   provider),
+      getPaginatedLogs(market, market.filters.ItemListed(), provider),
+      getPaginatedLogs(market, market.filters.OfferMade(),  provider),
+    ]);
+    const all = [
+      ...sales.map(e => ({ block: e.blockNumber, tokenId: Number(e.args.tokenId), price: Number(ethers.formatUnits(e.args.price, 6)), type: 'SALE' })),
+      ...listings.map(e => ({ block: e.blockNumber, tokenId: Number(e.args.tokenId), price: Number(ethers.formatUnits(e.args.price, 6)), type: 'LIST' })),
+      ...offers.map(e => ({ block: e.blockNumber, tokenId: Number(e.args.tokenId), price: Number(ethers.formatUnits(e.args.price, 6)), type: 'OFFER' })),
+    ].sort((a,b) => b.block - a.block).slice(0, 50);
+
+    if (!all.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">No activity yet.</td></tr>';
+      return;
+    }
+    const currentBlock = await APP.ethersProvider.getBlockNumber();
+    tbody.innerHTML = all.map(ev => {
+      const secsAgo = (currentBlock - ev.block) * 0.5;
+      const timeStr = secsAgo < 60 ? Math.round(secsAgo) + 's ago'
+        : secsAgo < 3600 ? Math.round(secsAgo/60) + 'm ago'
+        : secsAgo < 86400 ? Math.round(secsAgo/3600) + 'h ago'
+        : Math.round(secsAgo/86400) + 'd ago';
+      const cls = ev.type === 'SALE' ? 'type-sale' : 'type-list';
+      return `<tr>
+        <td><img src="https://tempomilady.xyz/pngs/${ev.tokenId}.png"
+          style="width:28px;height:28px;object-fit:cover;vertical-align:middle;border:1px solid #ccc"
+          onerror="this.style.display='none'" /></td>
+        <td>Milady #${String(ev.tokenId).padStart(4,'0')}</td>
+        <td>${ev.price} USD</td>
+        <td class="${cls}">${ev.type}</td>
+        <td>${timeStr}</td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    console.error('loadActivity:', e);
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">⚠ Could not load activity.</td></tr>';
+  }
+}
+
+// ── Modals ───────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.modal-overlay').forEach(m =>
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); })
+  );
+});
+
+function setStatus(msg) { document.getElementById('status-text').textContent = msg; }
+
+// ── Mint progress — real-time from contract ───────────────
+async function fetchMintedCount() {
+  if (!NFT_CONTRACT) return;
+  try {
+    const provider = APP.ethersProvider || new ethers.JsonRpcProvider('https://rpc.tempo.xyz');
+    const nft      = new ethers.Contract(NFT_CONTRACT, NFT_ABI, provider);
+    const supply   = Number(await nft.totalSupply());
+    APP.mintedCount = supply;
+    const pct = (supply / TOTAL * 100).toFixed(1);
+    document.getElementById('mint-bar').style.width = pct + '%';
+    document.getElementById('mint-label').textContent = supply.toLocaleString() + ' / 10,000 MINTED';
+    if (document.getElementById('mint-minted-num'))
+      document.getElementById('mint-minted-num').textContent = supply.toLocaleString();
+    if (document.getElementById('mint-remaining'))
+      document.getElementById('mint-remaining').textContent = (TOTAL - supply).toLocaleString();
+    if (document.getElementById('mint-pct'))
+      document.getElementById('mint-pct').textContent = pct + '%';
+  } catch {}
+}
+
+// ── Auto-reconnect on page load ──────────────────────────
+window.addEventListener('load', () => {
+  setTimeout(() => window.dispatchEvent(new Event('eip6963:requestProvider')), 500);
+  fetchMintedCount();
+  setInterval(fetchMintedCount, 30000);
+
+  setTimeout(async () => {
+    const eth = window.ethereum;
+    if (!eth) return;
+    try {
+      const accounts = await eth.request({ method: 'eth_accounts' });
+      if (accounts.length > 0) connectWithProvider(eth);
+    } catch {}
+  }, 800);
+
+  updateWalletUI();
+  loadListings();
+});
+</script>
+
+</body>
+</html>
+    /* ---- NAV ---- */
+    .top-nav {
+      background: #c0c0c0;
+      border-bottom: 2px solid #808080;
+      padding: 4px 12px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: wrap;
+    }
+
+    .top-nav-brand {
+      font-weight: bold;
+      font-size: 13px;
+      margin-right: 12px;
+      color: #000;
+    }
+
+    .nav-btn, .nav-a {
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 12px;
+      padding: 2px 10px;
+      cursor: pointer;
+      color: #000;
+      text-decoration: none;
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    .nav-btn:hover, .nav-a:hover { background: #d4d4d4; }
+    .nav-btn:active { border: 2px inset #fff; }
+    .nav-btn.active { border: 2px inset #808080; background: #b0b0b0; }
+
+    .nav-wallet {
+      margin-left: auto;
+      background: #4a5e2a;
+      color: #fff;
+      border: 2px outset #6a7e4a;
+      font-weight: bold;
+    }
+
+    .nav-wallet:hover { background: #3a4e1a; }
+
+    /* ---- PAGES ---- */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ---- BOXES ---- */
+    .m_box { border: 2px solid #000; margin: 1em 0; background: #ffffee; }
+    .m_box_red { border: 2px solid #000; margin: 1em 0; background: #fff0f0; }
+    .box { border: 2px solid #000; margin: 1em 0; background: #fff; }
+
+    .box_bar, .m_box_bar {
+      background: #4a5e2a;
+      color: #fff;
+      padding: 4px 8px;
+      font-weight: bold;
+    }
+
+    .box_inner { padding: 0.5em 0.8em; }
+
+    /* ---- GALLERY ---- */
+    .gallery_container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      padding: 0.5em;
+    }
+
+    .gallery_item {
+      text-align: center;
+      border: 1px solid #ccc;
+      padding: 4px;
+      background: #f9f9f9;
+      width: 110px;
+    }
+
+    .fake-img {
+      width: 100px;
+      height: 100px;
+      background: #eee;
+      border: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5em;
+      margin: 0 auto;
+    }
+
+    .gallery_item .desc {
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+
+    /* ---- DRIP ---- */
+    .drip-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 0.5em 0.8em 0.8em;
+      align-items: center;
+    }
+
+    .drip-badge {
+      display: inline-block;
+      font-family: "Courier New", monospace;
+      font-weight: bold;
+      font-size: 1.1em;
+      border: 2px solid #000;
+      padding: 2px 10px;
+      background: #fff;
+      min-width: 36px;
+      text-align: center;
+    }
+
+    .drip-D { color: #666; border-color: #999; background: #f0f0f0; }
+    .drip-C { color: #007700; border-color: #007700; }
+    .drip-B { color: #0000cc; border-color: #0000cc; }
+    .drip-A { color: #990099; border-color: #990099; }
+    .drip-S { color: #cc7700; border-color: #cc7700; background: #fffce0; }
+    .drip-SS { color: #cc0000; border-color: #cc0000; background: #fff0f0; font-size: 1.3em; }
+
+    /* ---- ROADMAP ---- */
+    .roadmap-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 0.5em 0.8em;
+      border-bottom: 1px dashed #ccc;
+    }
+
+    .roadmap-item:last-child { border-bottom: none; }
+
+    .rm-badge {
+      background: #4a5e2a;
+      color: #fff;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 2px 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ---- MINT ---- */
+    .mint-banner {
+      text-align: center;
+      font-size: 1.4em;
+      font-weight: bold;
+      padding: 0.6em 0 0.2em;
+      letter-spacing: 1px;
+    }
+
+    .mint-layout {
+      display: flex;
+      gap: 1em;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      padding: 0.6em 0.8em;
+    }
+
+    .mint-preview-box {
+      border: 2px solid #000;
+      background: #f5f5ff;
+      padding: 0.8em;
+      text-align: center;
+      flex: 0 0 190px;
+    }
+
+    .mint-nft-img {
+      width: 150px;
+      height: 150px;
+      background: #e0e0f0;
+      border: 2px inset #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4em;
+      margin: 0 auto 0.4em;
+    }
+
+    .mint-nft-label { font-size: 11px; color: #555; }
+
+    .mint-nft-id {
+      font-family: "Courier New", monospace;
+      font-weight: bold;
+    }
+
+    .mint-badges {
+      margin-top: 6px;
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .mini-badge {
+      font-size: 10px;
+      border: 1px solid;
+      padding: 1px 6px;
+      background: #fff;
+      font-weight: bold;
+    }
+
+    .badge-pink { color: #cc0066; border-color: #cc0066; }
+    .badge-gold { color: #996600; border-color: #996600; }
+    .badge-blue { color: #0000cc; border-color: #0000cc; }
+
+    .mint-panel-box { flex: 1; min-width: 220px; }
+
+    .progress-wrap {
+      border: 2px inset #ccc;
+      height: 18px;
+      background: #ddd;
+      margin-bottom: 3px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #4a5e2a;
+      transition: width 0.5s;
+    }
+
+    .progress-label {
+      font-size: 11px;
+      color: #555;
+      margin-bottom: 0.6em;
+      font-family: "Courier New", monospace;
+    }
+
+    .mint-table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 0.7em;
+      font-size: 13px;
+    }
+
+    .mint-table td {
+      border: 1px solid #ccc;
+      padding: 3px 8px;
+    }
+
+    .mint-table td:first-child {
+      background: #f0f0f0;
+      font-weight: bold;
+      width: 45%;
+    }
+
+    .qty-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 0.6em;
+    }
+
+    .qty-row label { font-weight: bold; font-size: 13px; }
+
+    .qty-btn {
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      font-size: 14px;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .qty-btn:active { border: 2px inset #fff; }
+
+    .qty-num {
+      font-family: "Courier New", monospace;
+      font-size: 1.1em;
+      font-weight: bold;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    .mint-total-row {
+      background: #ffffcc;
+      border: 1px solid #999;
+      padding: 4px 8px;
+      margin-bottom: 0.7em;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .mint-total-row span:last-child {
+      font-family: "Courier New", monospace;
+      font-weight: bold;
+    }
+
+    .btn-mint {
+      background: #4a5e2a;
+      color: #fff;
+      border: 3px outset #6a7e4a;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 14px;
+      font-weight: bold;
+      padding: 6px 20px;
+      cursor: pointer;
+      width: 100%;
+      letter-spacing: 1px;
+    }
+
+    .btn-mint:hover { background: #3a4e1a; }
+    .btn-mint:active { border: 3px inset #6a7e4a; }
+    .btn-mint:disabled { background: #808080; cursor: not-allowed; }
+
+    .mint-note {
+      font-size: 11px;
+      color: #555;
+      margin-top: 6px;
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* ---- MARKET ---- */
+    .mkt-stats-table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 0.6em;
+    }
+
+    .mkt-stats-table th {
+      background: #4a5e2a;
+      color: #fff;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .mkt-stats-table td {
+      border: 1px solid #999;
+      padding: 5px 10px;
+      text-align: center;
+      background: #f0f0f0;
+      font-weight: bold;
+    }
+
+    .mkt-controls {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 0.6em;
+    }
+
+    .tab-btn {
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 12px;
+      padding: 3px 10px;
+      cursor: pointer;
+    }
+
+    .tab-btn.active { border: 2px inset #808080; background: #a0a0a0; }
+    .tab-btn:hover { background: #d0d0d0; }
+
+    .sort-sel {
+      font-size: 12px;
+      border: 1px solid #999;
+      padding: 2px 4px;
+      background: #fff;
+      margin-left: auto;
+    }
+
+    .btn-act {
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 12px;
+      padding: 3px 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-act:hover { background: #d0d0d0; }
+    .btn-act:active { border: 2px inset #fff; }
+
+    .btn-act-primary {
+      background: #4a5e2a;
+      color: #fff;
+      border: 2px outset #6a7e4a;
+    }
+
+    .btn-act-primary:hover { background: #0000aa; }
+
+    .nft-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 1em;
+    }
+
+    .nft-card {
+      border: 2px solid #000;
+      background: #fff;
+      width: 140px;
+      cursor: pointer;
+    }
+
+    .nft-card:hover { background: #fffff0; border-color: #4a5e2a; }
+    .nft-card.selected { background: #f0f5e8; border: 2px solid #4a5e2a; box-shadow: inset 0 0 0 2px #4a5e2a; }
+    .nft-card .select-check { display:none; position:absolute; top:4px; right:4px; background:#4a5e2a; color:#fff; font-size:10px; font-weight:bold; padding:1px 5px; border-radius:2px; }
+    .nft-card.selected .select-check { display:block; }
+    .nft-card-img { position:relative; }
+
+    .nft-card-img {
+      width: 136px;
+      height: 136px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3em;
+      border-bottom: 2px solid #000;
+    }
+
+    .nft-card-body { padding: 4px 6px; }
+
+    .nft-card-id {
+      font-family: "Courier New", monospace;
+      font-size: 11px;
+      color: #555;
+    }
+
+    .nft-card-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2px;
+    }
+
+    .nft-card-price {
+      font-family: "Courier New", monospace;
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    .nft-card-grade { font-weight: bold; font-size: 12px; }
+
+    .nft-buy-btn {
+      display: none;
+      width: 100%;
+      background: #4a5e2a;
+      color: #fff;
+      border: 2px outset #6a7e4a;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 3px;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    .nft-card:hover .nft-buy-btn { display: block; }
+    .nft-buy-btn:active { border: 2px inset #6a7e4a; }
+    .nft-buy-btn.always-show { display: block; }
+
+    .empty-box {
+      border: 2px dashed #ccc;
+      text-align: center;
+      padding: 2em;
+      color: #888;
+      margin: 1em 0;
+      font-style: italic;
+    }
+
+    .act-table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 12px;
+    }
+
+    .act-table th {
+      background: #4a5e2a;
+      color: #fff;
+      padding: 3px 8px;
+      text-align: left;
+    }
+
+    .act-table td {
+      border: 1px solid #ddd;
+      padding: 4px 8px;
+    }
+
+    .act-table tr:hover td { background: #fffff0; }
+    .act-table tr:nth-child(even) td { background: #f9f9f9; }
+    .act-table tr:nth-child(even):hover td { background: #fffff0; }
+
+    .type-sale { color: #007700; font-weight: bold; }
+    .type-list { color: #0000cc; font-weight: bold; }
+
+    /* ---- MODALS ---- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal-win {
+      background: #c0c0c0;
+      border: 3px outset #fff;
+      min-width: 280px;
+      max-width: 340px;
+      width: 90%;
+      box-shadow: 4px 4px 0 #000;
+    }
+
+    .modal-title-bar {
+      background: #4a5e2a;
+      color: #fff;
+      padding: 4px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    .modal-x {
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      font-weight: bold;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      font-size: 11px;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .modal-x:active { border: 2px inset #fff; }
+
+    .modal-body { padding: 1em; }
+
+    .modal-lbl {
+      font-size: 12px;
+      font-weight: bold;
+      display: block;
+      margin: 8px 0 3px;
+    }
+
+    .modal-lbl:first-child { margin-top: 0; }
+
+    .modal-input {
+      width: 100%;
+      border: 2px inset #ccc;
+      padding: 3px 6px;
+      font-family: "Courier New", monospace;
+      font-size: 13px;
+      background: #fff;
+    }
+
+    .wallet-opt {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      border: 2px outset #ccc;
+      padding: 6px 10px;
+      cursor: pointer;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: bold;
+      width: 100%;
+      text-align: left;
+    }
+
+    .wallet-opt:hover { background: #fffff0; border-color: #4a5e2a; }
+    .wallet-opt:active { border: 2px inset #ccc; }
+
+    /* ---- STATUS BAR ---- */
+    .status-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #c0c0c0;
+      border-top: 2px solid #fff;
+      padding: 3px 10px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 500;
+    }
+
+    .led {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #00aa00;
+      border: 1px solid #007700;
+      flex-shrink: 0;
+    }
+
+    .led.off { background: #888; border-color: #555; }
+
+    p { margin: 0.5em 0; }
+
+    .inner-italic {
+      border: 1px solid #000;
+      padding: 0.8em;
+      font-style: italic;
+      text-align: center;
+      margin: 0.5em 2em;
+    }
+
+    .fake-img-lg {
+      width: 260px;
+      height: 180px;
+      background: #e8e8f0;
+      border: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 5em;
+      margin: 0 auto;
+    }
+
+    .audio-wrap { text-align: center; padding: 0.5em 0; }
+    audio { width: 60%; max-width: 400px; }
+
+    @media(max-width:520px){
+      .mint-layout { flex-direction: column; }
+      .nft-card { width: 120px; }
+      .nft-card-img { width: 116px; height: 116px; }
+      audio { width: 95%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP NAV BAR -->
+<div class="top-nav">
+  <span class="top-nav-brand">⊡ TEMPO MILADY</span>
+  <button class="nav-btn active" id="nav-home" onclick="showPage('home')">HOME</button>
+  <button class="nav-btn" id="nav-mint" onclick="showPage('mint')">MINT</button>
+  <button class="nav-btn" id="nav-market" onclick="showPage('market')">MARKET</button>
+  <a class="nav-a" href="https://twitter.com" target="_blank">TWITTER</a>
+  <a class="nav-a" href="https://discord.com" target="_blank">DISCORD</a>
+  <button class="nav-btn nav-wallet" id="wallet-btn" onclick="openWalletModal()">CONNECT WALLET</button>
+</div>
+
+
+<!-- ==============================================
+     HOME PAGE
+============================================== -->
+<div class="page active" id="page-home">
+<div class="page-wrap">
+
+  <div style="text-align:center;margin:1em 0">
+    <!-- Replace with your actual banner image: <img src="images/banner.png" style="border:2px solid gray;max-width:500px;width:100%" /> -->
+    <img src="images/banner.png" style="border:2px solid gray;max-width:500px;width:100%" />
+  </div>
+
+  <div class="m_box">
+    <div class="m_box_bar">
+      <h2 style="margin:0;font-size:1em">Welcome to Tempo Milady! — ゆっくりしていってね!</h2>
+    </div>
+    <div class="box_inner">
+      <p>Tempo Milady is a collection of 10,000 generative pfpNFT's in a neochibi aesthetic inspired by street style tribes — now on <b>Tempo chain</b>.</p>
+    </div>
+  </div>
+
+  <div class="audio-wrap">
+    <audio controls loop>
+      <source src="ost.ogg" type="audio/ogg" />
+      <source src="ost.mp3" type="audio/mpeg" />
+    </audio>
+  </div>
+
+  <hr />
+
+  <p style="text-align:center">
+    <a href="https://discord.gg/" target="_blank">Tempo Milady Community Discord</a> |
+    <a href="https://twitter.com/" target="_blank">Tempo Milady Official Twitter</a>
+  </p>
+
+  <!-- Collection Box -->
+  <div class="box">
+    <div class="box_bar"><h2 style="margin:0;font-size:1em">Tempo Milady Collection</h2></div>
+    <div class="box_inner">
+      <br />
+      <div style="text-align:center">
+        <!-- Replace with: <img src="images/milady.gif" /> -->
+        <img src="images/milady.gif" style="width:320px;height:404px" />
+      </div>
+      <p style="text-align:center">
+        <br />
+        Tempo Milady lives on Tempo chain. Mint, trade, and collect — fully on-chain, pure Web3.
+      </p>
+      <p style="text-align:center">
+        <button class="btn-mint" style="width:auto;padding:5px 24px;display:inline-block" onclick="showPage('mint')">MINT NOW</button>
+        &nbsp;
+        <button class="btn-act" onclick="showPage('market')">VIEW MARKET</button>
+      </p>
+    </div>
+    <hr />
+  </div>
+
+  <hr />
+
+  <div class="inner-italic">
+    <img src="images/fruits_milady.png" style="width:320px;height:469px;object-fit:cover" />
+    <p style="margin-top:0.5em"><b>Milady style is inspired by the subcultural fashion tribes of Y2K Japan.</b></p>
+  </div>
+
+  <hr />
+
+  <!-- Collection details -->
+  <h3>Details:</h3>
+  <ul style="line-height:1.9">
+    <li><b>Avatar-first design:</b> Illustrated to ensure strong social media profile aesthetics with an emphasis on fashion.</li>
+    <li><b>Chain roll function:</b> Randomized cosmetics are organized into <a href="#themes">different style themes</a>, with a chance of the consecutive generation sticking to the same theme, designed to organically produce aesthetic coherency.</li>
+    <li><b>Graded for Drip:</b> Miladys have ranked badges on a <a href="#drip_grade">variety of weighted metrics</a>, adding additional layers to a speculative market beyond objective trait scarcity.</li>
+    <li><b>Neochibi Aesthetic:</b> All art in a unique childlike take on anime illustration.</li>
+    <li><b>Tempo chain:</b> 10,000 supply. Mint price 5 pathUSD.</li>
+  </ul>
+
+  <hr />
+
+  <!-- Style Themes -->
+  <div class="box" id="themes">
+    <div class="box_bar"><h2 style="margin:0;font-size:1em">Style Themes</h2></div>
+    <div class="box_inner">
+      <p>Tempo Miladys generate a variety of accessories, but the two primary cosmetics — Hat &amp; Shirt — are each divided into five major style themes inspired by Tokyo fashion tribes:</p>
+      <div class="gallery_container">
+        <div class="gallery_item">
+          <img src="images/gyaru.png" style="width:100px;height:120px;object-fit:cover" alt="Gyaru Milady" />
+          <div class="desc">Gyaru</div>
+        </div>
+        <div class="gallery_item">
+          <img src="images/prep.png" style="width:100px;height:120px;object-fit:cover" alt="Prep Milady" />
+          <div class="desc">Prep</div>
+        </div>
+        <div class="gallery_item">
+          <img src="images/lolita.png" style="width:100px;height:120px;object-fit:cover" alt="Lolita Milady" />
+          <div class="desc">Lolita</div>
+        </div>
+        <div class="gallery_item">
+          <img src="images/hypebeast.png" style="width:100px;height:120px;object-fit:cover" alt="Hypebeast Milady" />
+          <div class="desc">Hypebeast</div>
+        </div>
+        <div class="gallery_item">
+          <img src="images/harajuku.png" style="width:100px;height:120px;object-fit:cover" alt="Harajuku Milady" />
+          <div class="desc">Harajuku</div>
+        </div>
+      </div>
+      <hr />
+      <p>The bottom border of a Milady card is defined by its theme(s). A Milady whose Hat &amp; Shirt cosmetic share the same theme receives +5 on their <a href="#drip_grade">Drip Score</a>.</p>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- Drip Grade -->
+  <div class="box" id="drip_grade">
+    <div class="box_bar"><h2 style="margin:0;font-size:1em">Drip Grade</h2></div>
+    <div class="box_inner">
+      <p>Tempo Miladys each have a drip score rating their overall stylishness, with each cosmetic scored on its rarity, then weighted against the prominence of its slot, with a multiplier applied for theme or costume complete badges. Drip scores tie value to aesthetics over pure trait scarcity.</p>
+      <p>Miladys are given a letter grading for their drip score (D, C, B, A, S, SS) to help categorize an individual Milady's quality.</p>
+    </div>
+    <div class="drip-row">
+      <span class="drip-badge drip-D">D</span>
+      <span class="drip-badge drip-C">C</span>
+      <span class="drip-badge drip-B">B</span>
+      <span class="drip-badge drip-A">A</span>
+      <span class="drip-badge drip-S">S</span>
+      <span class="drip-badge drip-SS">SS</span>
+    </div>
+  </div>
+
+  <div class="inner-italic">
+    <img src="images/milady3.jpg" style="width:321.65px;height:401.49px;object-fit:cover"/>
+    <p style="margin-top:0.5em">We love a cute Milady!</p>
+  </div>
+
+  <hr />
+
+  <!-- Roadmap -->
+  <div class="box">
+    <div class="box_bar"><h2 style="margin:0;font-size:1em">World Map — Roadmap</h2></div>
+    <div class="roadmap-item">
+      <span class="rm-badge">LVL 1 ✅</span>
+      <div><b>Genesis Mint on Tempo Mainnet</b> — Official mint of 10,000 Tempo Miladys. Connect wallet, mint, and flex your drip score.</div>
+    </div>
+    <div class="roadmap-item">
+      <span class="rm-badge">LVL 2 📍</span>
+      <div><b>P2P Marketplace &amp; Floor Sweeper</b> — Fully on-chain marketplace. List, buy, and sweep up to 20 floor Miladys in a single gas-optimized transaction.</div>
+    </div>
+    <div class="roadmap-item">
+      <span class="rm-badge">LVL 3 🔒</span>
+      <div><b>Drip Leaderboard &amp; Rarity Explorer</b> — On-chain Drip Score leaderboard, trait filter tools, and rarity explorer.</div>
+    </div>
+    <div class="roadmap-item">
+      <span class="rm-badge">LVL 4 🔒</span>
+      <div><b>Milady Village on Tempo</b> — Holder-exclusive community features, derivative projects, and expansion packs native to Tempo chain.</div>
+    </div>
+  </div>
+
+  <hr />
+
+  <div class="m_box_red">
+    <div class="m_box_bar"><h2 style="margin:0;font-size:1em">About Tempo Milady</h2></div>
+    <div style="text-align:center;padding:0.5em 0.8em">
+      <p>Tempo Milady is a generative pfpNFT collection on <b>Tempo chain</b>.</p>
+      <hr />
+      <p style="text-align:center">
+        <a href="https://discord.gg/" target="_blank">Community Discord</a> |
+        <a href="https://twitter.com/" target="_blank">Official Twitter</a> |
+        <a href="#" target="_blank">Contract</a>
+      </p>
+      <hr />
+      <p>All Tempo Milady branding and assets are copylefted under the <a href="https://viralpubliclicense.org" target="_blank">Viral Public License</a>.</p>
+    </div>
+  </div>
+
+</div>
+</div><!-- /page-home -->
+
+
+<!-- ==============================================
+     MINT PAGE
+============================================== -->
+<div class="page" id="page-mint">
+<div class="page-wrap">
+
+  <div class="mint-banner">✦ TEMPO MILADY — GENESIS MINT ✦</div>
+  <p style="text-align:center;font-size:12px;color:#555;margin-bottom:0.8em">10,000 generative neochibi pfpNFTs on Tempo chain</p>
+
+  <div class="box">
+    <div class="box_bar"><h2 style="margin:0;font-size:1em">Mint Your Milady</h2></div>
+    <div class="mint-layout">
+
+      <!-- Preview -->
+      <div class="mint-preview-box">
+        <div class="mint-nft-img" id="mint-preview" style="padding:0;overflow:hidden">
+          <img src="https://tempomilady.xyz/pngs/1.png"
+            style="width:100%;height:100%;object-fit:cover;display:block"
+            onerror="this.style.display='none'" />
+        </div>
+        <div class="mint-nft-label">NEXT TO MINT</div>
+        <div class="mint-nft-id">Milady <span id="mint-next-id">#????</span></div>
+        <div class="mint-badges">
+          <span class="mini-badge badge-pink">Gyaru</span>
+          <span class="mini-badge badge-gold">S-Grade</span>
+          <span class="mini-badge badge-blue">Tempo</span>
+        </div>
+        <p style="font-size:11px;color:#666;margin-top:8px;font-style:italic">Traits randomly assigned at mint. No duplicates.</p>
+      </div>
+
+      <!-- Panel -->
+      <div class="mint-panel-box">
+        <div class="progress-wrap">
+          <div class="progress-fill" id="mint-bar" style="width:0%"></div>
+        </div>
+        <div class="progress-label" id="mint-label">0 / 10,000 MINTED</div>
+
+        <table class="mint-table">
+          <tr><td>Mint Price</td><td>0.4 pathUSD</td></tr>
+          <tr><td>Total Supply</td><td>10,000</td></tr>
+          <tr><td>Max / Wallet</td><td>100</td></tr>
+          <tr><td>Network</td><td>Tempo Chain</td></tr>
+          <tr><td>Token</td><td>pathUSD (USDC.e)</td></tr>
+        </table>
+
+        <div class="qty-row">
+          <label>Quantity:</label>
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <input type="number" id="qty-display" value="1" min="1" max="100"
+            style="width:60px;font-family:'Courier New',monospace;font-size:1.1em;font-weight:bold;text-align:center;border:2px inset #ccc;background:#fff;padding:1px 4px"
+            oninput="setQty(this.value)" />
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        </div>
+
+        <div class="mint-total-row">
+          <span>TOTAL PRICE</span>
+          <span><span id="total-price">0.4</span> pathUSD</span>
+        </div>
+
+        <button class="btn-mint" id="mint-btn" onclick="handleMint()">CONNECT WALLET TO MINT</button>
+        <p class="mint-note">SS-grade Miladys have ~0.5% chance. May your drip be blessed. 🌸</p>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+
+  <div class="m_box">
+    <div class="m_box_bar"><h2 style="margin:0;font-size:1em">How to Mint</h2></div>
+    <div class="box_inner">
+      <ol style="padding-left:1.4em;line-height:2">
+        <li>Click <b>CONNECT WALLET</b> in the top navigation bar</li>
+        <li>Make sure you are on <b>Tempo chain</b></li>
+        <li>Have <b>pathUSD</b> (USDC.e) in your wallet</li>
+        <li>Select quantity (max 100 per transaction)</li>
+        <li>Click <b>MINT NOW</b> and confirm in your wallet</li>
+      </ol>
+    </div>
+  </div>
+
+</div>
+</div><!-- /page-mint -->
+
+
+<!-- ==============================================
+     MARKET PAGE
+============================================== -->
+<div class="page" id="page-market">
+<div class="page-wrap">
+
+  <div class="mint-banner">✦ TEMPO MILADY — MARKET ✦</div>
+  <p style="text-align:center;font-size:12px;color:#555;margin-bottom:0.8em">Buy and sell Tempo Milady NFTs on Tempo chain</p>
+
+  <table class="mkt-stats-table">
+    <thead>
+      <tr>
+        <th>LISTED</th>
+        <th>FLOOR PRICE</th>
+        <th>TOTAL VOLUME</th>
+        <th>OWNERS</th>
+        <th>TOTAL SALES</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td id="stat-listed">0</td>
+        <td id="stat-floor">— USD</td>
+        <td id="stat-volume">0 USD</td>
+        <td id="stat-owners">—</td>
+        <td id="stat-sales">0</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="mkt-controls">
+    <button class="tab-btn active" onclick="switchTab('listed',this)">FOR SALE</button>
+    <button class="tab-btn" onclick="switchTab('items',this)">ALL ITEMS</button>
+    <button class="tab-btn" onclick="switchTab('mine',this)">MY MILADYS</button>
+    <button class="tab-btn" onclick="switchTab('offers',this)">OFFERS</button>
+    <button class="tab-btn" onclick="switchTab('activity',this)">ACTIVITY</button>
+    <select class="sort-sel" onchange="sortListings(this.value)">
+      <option value="price-asc">Price: Low → High</option>
+      <option value="price-desc">Price: High → Low</option>
+      <option value="id-asc">ID: Low → High</option>
+      <option value="drip">Drip: Highest</option>
+    </select>
+    <button class="btn-act" onclick="openSweep()">🧹 SWEEP FLOOR</button>
+    <button class="btn-act btn-act-primary" onclick="openList()">📋 LIST MY MILADY</button>
+  </div>
+
+  <div id="market-content">
+    <div class="empty-box">🌸 No Miladys listed yet. Be the first to list yours and set the floor price.</div>
+  </div>
+
+  <!-- ALL ITEMS TAB -->
+  <div id="items-section" style="display:none">
+    <div class="box">
+      <div class="box_bar"><h2 style="margin:0;font-size:1em">All Minted Miladys</h2></div>
+      <div class="box_inner">
+        <p style="font-size:12px;color:#555;margin-bottom:0.6em">
+          All 10,000 Tempo Miladys. Click any to make an offer.
+          <button class="btn-act" style="font-size:11px;padding:2px 8px" onclick="loadAllItems()">↻ Refresh</button>
+        </p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:0.6em;align-items:center">
+          <label style="font-size:12px;font-weight:bold">Show:</label>
+          <select id="items-per-page" class="sort-sel" onchange="loadAllItems()">
+            <option value="50">50 per page</option>
+            <option value="100">100 per page</option>
+            <option value="200">200 per page</option>
+          </select>
+          <label style="font-size:12px;font-weight:bold;margin-left:8px">Page:</label>
+          <button class="btn-act" style="font-size:11px;padding:2px 8px" onclick="itemsPageChange(-1)">◀</button>
+          <span id="items-page-label" style="font-size:12px;font-family:'Courier New',monospace;font-weight:bold">1</span>
+          <button class="btn-act" style="font-size:11px;padding:2px 8px" onclick="itemsPageChange(1)">▶</button>
+          <span id="items-total-label" style="font-size:11px;color:#555"></span>
+        </div>
+        <div id="all-items-grid">
+          <div class="empty-box">Connect wallet to browse all Miladys.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MY MILADYS TAB -->
+  <div id="mine-section" style="display:none">
+    <div class="box">
+      <div class="box_bar">
+        <h2 style="margin:0;font-size:1em">My Miladys</h2>
+      </div>
+      <div class="box_inner">
+        <p style="font-size:12px;color:#555;margin-bottom:0.4em">
+          Click to select NFTs you want to list. Select multiple for bulk listing.
+          <button class="btn-act" style="font-size:11px;padding:2px 8px" onclick="loadMyNFTs()">↻ Refresh</button>
+        </p>
+
+        <!-- Selection toolbar — shown when items selected -->
+        <div id="selection-toolbar" style="display:none;background:#ffffcc;border:1px solid #999;padding:6px 10px;margin-bottom:0.6em;display:none;align-items:center;gap:8px;flex-wrap:wrap">
+          <b id="selected-count" style="font-size:12px">0 selected</b>
+          <input type="number" id="bulk-price" placeholder="Price (pathUSD)" min="0.01" step="0.01"
+            style="width:140px;font-family:'Courier New',monospace;font-size:12px;border:2px inset #ccc;padding:2px 6px;background:#fff" />
+          <button class="btn-mint" style="width:auto;padding:4px 14px;font-size:12px" onclick="bulkList()">LIST SELECTED</button>
+          <button class="btn-act" style="font-size:11px;padding:2px 8px" onclick="clearSelection()">✕ Clear</button>
+        </div>
+
+        <div id="my-nfts-grid">
+          <div class="empty-box">Connect wallet to see your Miladys.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OFFERS TAB -->
+  <div id="offers-section" style="display:none">
+    <div class="box">
+      <div class="box_bar"><h2 style="margin:0;font-size:1em">Offers Received</h2></div>
+      <div class="box_inner" style="overflow-x:auto">
+        <p style="font-size:12px;color:#555;margin-bottom:0.6em">Offers made on your Miladys. Accept to sell instantly.</p>
+        <table class="act-table" id="offers-table">
+          <thead>
+            <tr><th>Token</th><th>Offer Price</th><th>From</th><th>Expires</th><th>Action</th></tr>
+          </thead>
+          <tbody id="offers-rows">
+            <tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">No offers received yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="box" style="margin-top:1em">
+      <div class="box_bar"><h2 style="margin:0;font-size:1em">Offers Made</h2></div>
+      <div class="box_inner" style="overflow-x:auto">
+        <p style="font-size:12px;color:#555;margin-bottom:0.6em">Offers you've placed on other Miladys.</p>
+        <table class="act-table" id="my-offers-table">
+          <thead>
+            <tr><th>Token</th><th>Your Offer</th><th>Status</th><th>Expires</th><th>Action</th></tr>
+          </thead>
+          <tbody id="my-offers-rows">
+            <tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">No active offers.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVITY TAB -->
+  <div id="activity-section" style="display:none">
+    <div class="box">
+      <div class="box_bar"><h2 style="margin:0;font-size:1em">📜 Recent Activity</h2></div>
+      <div class="box_inner" style="overflow-x:auto">
+        <table class="act-table">
+          <thead>
+            <tr><th>#</th><th>Token</th><th>Price</th><th>Type</th><th>Time</th></tr>
+          </thead>
+          <tbody id="activity-rows">
+            <tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">Loading activity...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+  <p style="text-align:center;font-size:11px;color:#888">TEMPO MILADY MARKET — FULLY ON-CHAIN P2P — TEMPO CHAIN © 2026</p>
+
+</div>
+</div><!-- /page-market -->
+
+
+<!-- ====== MAKE OFFER MODAL ====== -->
+<div class="modal-overlay" id="offer-modal">
+  <div class="modal-win">
+    <div class="modal-title-bar">💬 Make Offer <button class="modal-x" onclick="closeModal('offer-modal')">✕</button></div>
+    <div class="modal-body">
+      <div id="offer-token-info" style="background:#f0f0f0;border:1px solid #ccc;padding:6px 10px;margin-bottom:0.8em;font-family:'Courier New',monospace;font-size:12px"></div>
+      <label class="modal-lbl">Your Offer (pathUSD)</label>
+      <input class="modal-input" type="number" id="offer-price" placeholder="e.g. 5.00" min="0.01" step="0.01" />
+      <label class="modal-lbl">Expires in</label>
+      <select class="modal-input" id="offer-expiry" style="font-family:'Courier New',monospace">
+        <option value="1">1 day</option>
+        <option value="3" selected>3 days</option>
+        <option value="7">7 days</option>
+        <option value="30">30 days</option>
+      </select>
+      <div style="background:#ffffcc;border:1px solid #ccc;padding:4px 8px;margin-top:0.6em;font-size:11px">
+        ⚠ Making an offer will pre-approve pathUSD from your wallet. You can cancel anytime.
+      </div>
+      <br />
+      <button class="btn-mint" onclick="submitOffer()">SUBMIT OFFER</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== LIST NFT MODAL ====== -->
+<div class="modal-overlay" id="list-modal">
+  <div class="modal-win">
+    <div class="modal-title-bar">📋 List Your Milady <button class="modal-x" onclick="closeModal('list-modal')">✕</button></div>
+    <div class="modal-body">
       <label class="modal-lbl">Milady Token ID (1–10000)</label>
       <input class="modal-input" type="number" id="list-id" placeholder="e.g. 4291" min="1" max="10000" />
       <label class="modal-lbl">Price (pathUSD)</label>
