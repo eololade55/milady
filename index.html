@@ -977,8 +977,8 @@
 
   <div class="mkt-controls">
     <button class="tab-btn active" onclick="switchTab('listed',this)">FOR SALE</button>
-    <button class="tab-btn" onclick="switchTab('all',this)">ALL MILADYS</button>
     <button class="tab-btn" onclick="switchTab('mine',this)">MY MILADYS</button>
+    <button class="tab-btn" onclick="switchTab('offers',this)">OFFERS</button>
     <button class="tab-btn" onclick="switchTab('activity',this)">ACTIVITY</button>
     <select class="sort-sel" onchange="sortListings(this.value)">
       <option value="price-asc">Price: Low → High</option>
@@ -994,6 +994,58 @@
     <div class="empty-box">🌸 No Miladys listed yet. Be the first to list yours and set the floor price.</div>
   </div>
 
+  <!-- MY MILADYS TAB -->
+  <div id="mine-section" style="display:none">
+    <div class="box">
+      <div class="box_bar">
+        <h2 style="margin:0;font-size:1em">My Miladys</h2>
+      </div>
+      <div class="box_inner">
+        <p style="font-size:12px;color:#555;margin-bottom:0.6em">
+          NFTs detected in your connected wallet.
+          <button class="btn-act" style="font-size:11px;padding:2px 8px" onclick="loadMyNFTs()">↻ Refresh</button>
+        </p>
+        <div id="my-nfts-grid">
+          <div class="empty-box">Connect wallet to see your Miladys.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OFFERS TAB -->
+  <div id="offers-section" style="display:none">
+    <div class="box">
+      <div class="box_bar"><h2 style="margin:0;font-size:1em">Offers Received</h2></div>
+      <div class="box_inner" style="overflow-x:auto">
+        <p style="font-size:12px;color:#555;margin-bottom:0.6em">Offers made on your Miladys. Accept to sell instantly.</p>
+        <table class="act-table" id="offers-table">
+          <thead>
+            <tr><th>Token</th><th>Offer Price</th><th>From</th><th>Expires</th><th>Action</th></tr>
+          </thead>
+          <tbody id="offers-rows">
+            <tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">No offers received yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="box" style="margin-top:1em">
+      <div class="box_bar"><h2 style="margin:0;font-size:1em">Offers Made</h2></div>
+      <div class="box_inner" style="overflow-x:auto">
+        <p style="font-size:12px;color:#555;margin-bottom:0.6em">Offers you've placed on other Miladys.</p>
+        <table class="act-table" id="my-offers-table">
+          <thead>
+            <tr><th>Token</th><th>Your Offer</th><th>Status</th><th>Expires</th><th>Action</th></tr>
+          </thead>
+          <tbody id="my-offers-rows">
+            <tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">No active offers.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVITY TAB -->
   <div id="activity-section" style="display:none">
     <div class="box">
       <div class="box_bar"><h2 style="margin:0;font-size:1em">📜 Recent Activity</h2></div>
@@ -1017,6 +1069,63 @@
 
 </div>
 </div><!-- /page-market -->
+
+
+<!-- ====== MAKE OFFER MODAL ====== -->
+<div class="modal-overlay" id="offer-modal">
+  <div class="modal-win">
+    <div class="modal-title-bar">💬 Make Offer <button class="modal-x" onclick="closeModal('offer-modal')">✕</button></div>
+    <div class="modal-body">
+      <div id="offer-token-info" style="background:#f0f0f0;border:1px solid #ccc;padding:6px 10px;margin-bottom:0.8em;font-family:'Courier New',monospace;font-size:12px"></div>
+      <label class="modal-lbl">Your Offer (pathUSD)</label>
+      <input class="modal-input" type="number" id="offer-price" placeholder="e.g. 5.00" min="0.01" step="0.01" />
+      <label class="modal-lbl">Expires in</label>
+      <select class="modal-input" id="offer-expiry" style="font-family:'Courier New',monospace">
+        <option value="1">1 day</option>
+        <option value="3" selected>3 days</option>
+        <option value="7">7 days</option>
+        <option value="30">30 days</option>
+      </select>
+      <div style="background:#ffffcc;border:1px solid #ccc;padding:4px 8px;margin-top:0.6em;font-size:11px">
+        ⚠ Making an offer will pre-approve pathUSD from your wallet. You can cancel anytime.
+      </div>
+      <br />
+      <button class="btn-mint" onclick="submitOffer()">SUBMIT OFFER</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== LIST NFT MODAL ====== -->
+<div class="modal-overlay" id="list-modal">
+  <div class="modal-win">
+    <div class="modal-title-bar">📋 List Your Milady <button class="modal-x" onclick="closeModal('list-modal')">✕</button></div>
+    <div class="modal-body">
+      <label class="modal-lbl">Milady Token ID (1–10000)</label>
+      <input class="modal-input" type="number" id="list-id" placeholder="e.g. 4291" min="1" max="10000" />
+      <label class="modal-lbl">Price (pathUSD)</label>
+      <input class="modal-input" type="number" id="list-price" placeholder="e.g. 10" min="0.01" step="0.01" />
+      <br /><br />
+      <button class="btn-mint" onclick="submitListing()">LIST FOR SALE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SWEEP MODAL ====== -->
+<div class="modal-overlay" id="sweep-modal">
+  <div class="modal-win">
+    <div class="modal-title-bar">🧹 Sweep Floor <button class="modal-x" onclick="closeModal('sweep-modal')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:12px;margin-bottom:0.7em">Buy multiple floor-priced Miladys in one gas-optimized transaction. Max 20 per sweep.</p>
+      <label class="modal-lbl">Number to sweep (max 20)</label>
+      <input class="modal-input" type="number" id="sweep-count" placeholder="e.g. 5" min="1" max="20" />
+      <div id="sweep-info" style="font-family:'Courier New',monospace;font-size:12px;background:#ffffcc;border:1px solid #ccc;padding:4px 8px;margin-top:8px">
+        FLOOR: — USD &nbsp; | &nbsp; TOTAL: — USD
+      </div>
+      <br />
+      <button class="btn-mint" onclick="executeSweep()">EXECUTE SWEEP</button>
+    </div>
+  </div>
+</div>
 
 
 <!-- ====== WALLET MODAL (AGENT-style EIP-6963) ====== -->
@@ -1140,6 +1249,7 @@
 // Fill in after deploying your contract
 // ═══════════════════════════════════════════════════════
 const NFT_CONTRACT   = '0xef867e3cB2d3B79FC300c7E08DC12FA68a39Ae9A';          // Tempo Milady mint contract
+const MARKET_CONTRACT  = '0x476fAC9189bc92C7451dfD86737DAf9326b96014';   // ← add this: your marketplace contract
 const PATHUSD_ADDR   = '0x20c0000000000000000000000000000000000000';          // pathUSD token address on Tempo
 const TEMPO_CHAIN_ID  = 4217;       // Tempo Mainnet chain ID
 const TEMPO_CHAIN_HEX = '0x1079';
@@ -1435,29 +1545,38 @@ function switchTab(tab, el) {
   APP.currentTab = tab;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  if (tab === 'activity') {
-    document.getElementById('market-content').style.display = 'none';
-    document.getElementById('activity-section').style.display = 'block';
-  } else {
+
+  document.getElementById('market-content').style.display   = 'none';
+  document.getElementById('mine-section').style.display     = 'none';
+  document.getElementById('offers-section').style.display   = 'none';
+  document.getElementById('activity-section').style.display = 'none';
+
+  if (tab === 'listed') {
     document.getElementById('market-content').style.display = 'block';
-    document.getElementById('activity-section').style.display = 'none';
-    renderGrid(tab);
+    renderGrid('listed');
+  } else if (tab === 'mine') {
+    document.getElementById('mine-section').style.display = 'block';
+    loadMyNFTs();
+  } else if (tab === 'offers') {
+    document.getElementById('offers-section').style.display = 'block';
+    loadOffers();
+  } else if (tab === 'activity') {
+    document.getElementById('activity-section').style.display = 'block';
   }
 }
 
 function renderGrid(tab) {
   const c = document.getElementById('market-content');
   const L = APP.listings;
-  const show = (tab === 'mine' && L.length) ? L.slice(0, Math.ceil(L.length / 2)) : L;
-  if (!show.length) {
-    c.innerHTML = '<div class="empty-box">🌸 ' + (tab === 'mine'
-      ? "You don't own any Miladys yet. Mint one to get started!"
-      : "No Miladys listed yet. Be the first to list yours and set the floor price.") + '</div>';
+  if (!L.length) {
+    c.innerHTML = '<div class="empty-box">🌸 No Miladys listed yet. Be the first to list yours and set the floor price.</div>';
     return;
   }
-  c.innerHTML = '<div class="nft-grid">' + show.map(l =>
+  c.innerHTML = '<div class="nft-grid">' + L.map(l =>
     `<div class="nft-card">
-      <div class="nft-card-img" style="background:${l.bg}">${l.emoji}</div>
+      <div class="nft-card-img" id="nft-img-${l.id}" style="background:${l.bg}">
+        <span class="nft-fallback">${l.emoji}</span>
+      </div>
       <div class="nft-card-body">
         <div class="nft-card-id">Milady #${String(l.id).padStart(4,'0')}</div>
         <div class="nft-card-row">
@@ -1465,9 +1584,15 @@ function renderGrid(tab) {
           <span class="nft-card-grade" style="color:${l.gradeColor}">${l.grade}</span>
         </div>
         <button class="nft-buy-btn" onclick="buyNFT(${l.id})">BUY NOW</button>
+        <button class="nft-buy-btn" style="background:#555;border-color:#444;margin-top:2px" onclick="openOfferModal(${l.id},${l.price})">MAKE OFFER</button>
       </div>
     </div>`
   ).join('') + '</div>';
+
+  L.forEach(l => {
+    const el = document.getElementById('nft-img-' + l.id);
+    if (el) setNftImage(el, l.id, l.emoji, l.bg);
+  });
 }
 
 function sortListings(val) {
@@ -1499,6 +1624,11 @@ function openList() {
   document.getElementById('list-modal').classList.add('open');
 }
 
+function openListFromNFT(id) {
+  document.getElementById('list-id').value = id;
+  document.getElementById('list-modal').classList.add('open');
+}
+
 function submitListing() {
   const id    = parseInt(document.getElementById('list-id').value);
   const price = parseFloat(document.getElementById('list-price').value);
@@ -1512,6 +1642,17 @@ function submitListing() {
   addActivity('Milady #' + String(id).padStart(4,'0'), price, 'LISTED');
   document.getElementById('list-id').value = '';
   document.getElementById('list-price').value = '';
+}
+
+function cancelListing(id) {
+  if (!requireWallet()) return;
+  // TODO: const signer = await APP.ethersProvider.getSigner();
+  // const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+  // await (await market.cancelListing(id)).wait();
+  APP.listings = APP.listings.filter(l => l.id !== id);
+  updateMarketStats();
+  setStatus('✓ Listing cancelled for Milady #' + String(id).padStart(4,'0'));
+  loadMyNFTs();
 }
 
 function openSweep() {
@@ -1546,8 +1687,180 @@ function updateMarketStats() {
 function addActivity(token, price, type) {
   const tbody = document.getElementById('activity-rows');
   const row   = document.createElement('tr');
-  row.innerHTML = `<td>🌸</td><td>${token}</td><td>${price} USD</td><td class="${type==='SALE'?'type-sale':'type-list'}">${type}</td><td>just now</td>`;
+  const cls   = type === 'SALE' ? 'type-sale' : type === 'OFFER' ? 'type-list' : 'type-list';
+  row.innerHTML = `<td>🌸</td><td>${token}</td><td>${price} USD</td><td class="${cls}">${type}</td><td>just now</td>`;
   tbody.insertBefore(row, tbody.firstChild);
+}
+
+// ── My NFTs ───────────────────────────────────────────────
+async function loadMyNFTs() {
+  const grid = document.getElementById('my-nfts-grid');
+  if (!APP.walletAddress) {
+    grid.innerHTML = '<div class="empty-box">Connect your wallet to see your Miladys.</div>';
+    return;
+  }
+  grid.innerHTML = '<div class="empty-box">Loading your Miladys...</div>';
+
+  if (!NFT_CONTRACT) {
+    grid.innerHTML = '<div class="empty-box">Contract not deployed yet — your NFTs will appear here after mint.</div>';
+    return;
+  }
+
+  try {
+    const contract = new ethers.Contract(NFT_CONTRACT, [
+      'function balanceOf(address) view returns (uint256)',
+      'function tokenOfOwnerByIndex(address, uint256) view returns (uint256)',
+    ], APP.ethersProvider);
+
+    const balance = Number(await contract.balanceOf(APP.walletAddress));
+    if (balance === 0) {
+      grid.innerHTML = '<div class="empty-box">You don\'t own any Miladys yet. Mint one to get started!</div>';
+      return;
+    }
+
+    const ids = await Promise.all(
+      Array.from({ length: balance }, (_, i) =>
+        contract.tokenOfOwnerByIndex(APP.walletAddress, i).then(Number)
+      )
+    );
+    APP.myNFTs = ids;
+
+    grid.innerHTML = '<div class="nft-grid">' + ids.map(id => {
+      const emoji    = EMOJIS[id % EMOJIS.length];
+      const bg       = BGS[id % BGS.length];
+      const isListed = APP.listings.find(l => l.id === id);
+      return `<div class="nft-card">
+        <div class="nft-card-img" id="my-nft-img-${id}" style="background:${bg}">
+          <span class="nft-fallback">${emoji}</span>
+        </div>
+        <div class="nft-card-body">
+          <div class="nft-card-id">Milady #${String(id).padStart(4,'0')}</div>
+          <div style="margin-top:4px">
+            ${isListed
+              ? `<button class="nft-buy-btn" style="display:block;background:#888;border-color:#666" onclick="cancelListing(${id})">CANCEL LISTING</button>`
+              : `<button class="nft-buy-btn" style="display:block" onclick="openListFromNFT(${id})">LIST FOR SALE</button>`
+            }
+          </div>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+
+    ids.forEach(id => {
+      const el = document.getElementById('my-nft-img-' + id);
+      if (el) setNftImage(el, id, EMOJIS[id % EMOJIS.length], BGS[id % BGS.length]);
+    });
+
+    setStatus('Found ' + balance + ' Milady' + (balance > 1 ? 's' : '') + ' in your wallet');
+  } catch (e) {
+    grid.innerHTML = '<div class="empty-box">⚠ Could not load NFTs: ' + (e.message || 'unknown error') + '</div>';
+  }
+}
+
+// ── Make Offer ────────────────────────────────────────────
+let offerTargetId = null;
+
+function openOfferModal(id, currentPrice) {
+  if (!requireWallet()) return;
+  offerTargetId = id;
+  document.getElementById('offer-token-info').textContent =
+    'Milady #' + String(id).padStart(4,'0') + '  |  Listed at: ' + currentPrice + ' pathUSD';
+  document.getElementById('offer-price').value = '';
+  document.getElementById('offer-modal').classList.add('open');
+}
+
+async function submitOffer() {
+  if (!requireWallet() || !offerTargetId) return;
+  const price  = parseFloat(document.getElementById('offer-price').value);
+  const expiry = parseInt(document.getElementById('offer-expiry').value);
+  if (!price || price <= 0) { setStatus('⚠ Enter a valid offer price'); return; }
+
+  // TODO: real call:
+  // const signer  = await APP.ethersProvider.getSigner();
+  // const pathusd = new ethers.Contract(PATHUSD_ADDR, ERC20_ABI, signer);
+  // await (await pathusd.approve(MARKET_CONTRACT, ethers.parseUnits(price.toString(), 6))).wait();
+  // const market  = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+  // await (await market.makeOffer(offerTargetId, ethers.parseUnits(price.toString(), 6), expiry * 86400)).wait();
+
+  if (!APP.myOffers) APP.myOffers = [];
+  const expiryDate = new Date(Date.now() + expiry * 86400000);
+  APP.myOffers.push({
+    id: offerTargetId, price,
+    from: APP.walletAddress,
+    expiry: expiryDate.toLocaleDateString(),
+    status: 'Pending'
+  });
+
+  closeModal('offer-modal');
+  setStatus('✓ Offer of ' + price + ' pathUSD placed on Milady #' + String(offerTargetId).padStart(4,'0'));
+  addActivity('Milady #' + String(offerTargetId).padStart(4,'0'), price, 'OFFER');
+}
+
+// ── Load Offers ───────────────────────────────────────────
+function loadOffers() {
+  const receivedBody = document.getElementById('offers-rows');
+  const myOffersBody = document.getElementById('my-offers-rows');
+
+  // TODO: fetch from contract:
+  // const market   = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, APP.ethersProvider);
+  // const received = await market.getOffersForOwner(APP.walletAddress);
+  // const made     = await market.getOffersByBidder(APP.walletAddress);
+
+  if (!APP.walletAddress) {
+    receivedBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">Connect wallet to see offers.</td></tr>';
+    myOffersBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">Connect wallet to see your offers.</td></tr>';
+    return;
+  }
+
+  if (!APP.receivedOffers || !APP.receivedOffers.length) {
+    receivedBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">No offers received yet.</td></tr>';
+  } else {
+    receivedBody.innerHTML = APP.receivedOffers.map(o =>
+      `<tr>
+        <td>Milady #${String(o.id).padStart(4,'0')}</td>
+        <td><b>${o.price} USD</b></td>
+        <td>${truncAddr(o.from)}</td>
+        <td>${o.expiry}</td>
+        <td><button class="btn-act btn-act-primary" style="font-size:11px;padding:2px 8px" onclick="acceptOffer(${o.id},'${o.from}',${o.price})">ACCEPT</button></td>
+      </tr>`
+    ).join('');
+  }
+
+  if (!APP.myOffers || !APP.myOffers.length) {
+    myOffersBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;font-style:italic;padding:1em">No active offers.</td></tr>';
+  } else {
+    myOffersBody.innerHTML = APP.myOffers.map(o =>
+      `<tr>
+        <td>Milady #${String(o.id).padStart(4,'0')}</td>
+        <td><b>${o.price} USD</b></td>
+        <td>${o.status}</td>
+        <td>${o.expiry}</td>
+        <td><button class="btn-act" style="font-size:11px;padding:2px 8px" onclick="cancelOffer(${o.id})">CANCEL</button></td>
+      </tr>`
+    ).join('');
+  }
+}
+
+// ── Accept / Cancel Offer ─────────────────────────────────
+async function acceptOffer(tokenId, from, price) {
+  if (!requireWallet()) return;
+  // TODO: const signer = await APP.ethersProvider.getSigner();
+  // const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+  // await (await market.acceptOffer(tokenId, from)).wait();
+  APP.totalVolume += price; APP.totalSales++;
+  updateMarketStats();
+  setStatus('✓ Accepted offer of ' + price + ' pathUSD for Milady #' + String(tokenId).padStart(4,'0'));
+  addActivity('Milady #' + String(tokenId).padStart(4,'0'), price, 'SALE');
+  loadOffers();
+}
+
+function cancelOffer(tokenId) {
+  if (!APP.myOffers) return;
+  // TODO: const signer = await APP.ethersProvider.getSigner();
+  // const market = new ethers.Contract(MARKET_CONTRACT, MARKET_ABI, signer);
+  // await (await market.cancelOffer(tokenId)).wait();
+  APP.myOffers = APP.myOffers.filter(o => o.id !== tokenId);
+  setStatus('✓ Offer cancelled on Milady #' + String(tokenId).padStart(4,'0'));
+  loadOffers();
 }
 
 // ── Modals ───────────────────────────────────────────────
