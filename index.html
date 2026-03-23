@@ -886,7 +886,7 @@
       <!-- Preview -->
       <div class="mint-preview-box">
         <div class="mint-nft-img" id="mint-preview" style="padding:0;overflow:hidden">
-          <img src="https://tempomilady.xyz/pngs/1.png"
+          <img src="https://bafybeiasntwgwlqb3qrvjrt7gog3lvyqbtxxmfyfprfi6mg7sjytbwivpi.ipfs.w3s.link/1.png"
             style="width:100%;height:100%;object-fit:cover;display:block"
             onerror="this.style.display='none'" />
         </div>
@@ -1316,7 +1316,7 @@ const MARKET_ABI = [
 ];
 
 function nftImageUrl(id) {
-  return `https://tempomilady.xyz/pngs/${id}.png`;
+  return `https://bafybeiasntwgwlqb3qrvjrt7gog3lvyqbtxxmfyfprfi6mg7sjytbwivpi.ipfs.w3s.link/${id}.png`;
 }
 
 function setNftImage(el, id, emoji, bg) {
@@ -1694,7 +1694,7 @@ function renderAllItems() {
     const listed = listedMap[id];
     return `<div class="nft-card">
       <div class="nft-card-img" style="background:#e8e8f8;padding:0;overflow:hidden">
-        <img src="https://tempomilady.xyz/pngs/${id}.png"
+        <img src="https://bafybeiasntwgwlqb3qrvjrt7gog3lvyqbtxxmfyfprfi6mg7sjytbwivpi.ipfs.w3s.link/${id}.png"
           style="width:100%;height:100%;object-fit:cover;display:block"
           onerror="this.style.display='none'" />
       </div>
@@ -1791,7 +1791,7 @@ function renderGridFromData(listings) {
   c.innerHTML = '<div class="nft-grid">' + listings.map(l =>
     `<div class="nft-card">
       <div class="nft-card-img" style="background:#e8e8f8;padding:0;overflow:hidden">
-        <img src="https://tempomilady.xyz/pngs/${l.id}.png"
+        <img src="https://bafybeiasntwgwlqb3qrvjrt7gog3lvyqbtxxmfyfprfi6mg7sjytbwivpi.ipfs.w3s.link/${l.id}.png"
           style="width:100%;height:100%;object-fit:cover;display:block"
           onerror="this.style.display='none'" />
       </div>
@@ -1912,7 +1912,7 @@ function updateListPreview() {
   const preview = document.getElementById('list-nft-preview');
   const img     = document.getElementById('list-nft-img');
   if (id) {
-    img.src = `https://tempomilady.xyz/pngs/${id}.png`;
+    img.src = `https://bafybeiasntwgwlqb3qrvjrt7gog3lvyqbtxxmfyfprfi6mg7sjytbwivpi.ipfs.w3s.link/${id}.png`;
     preview.style.display = 'block';
   } else {
     preview.style.display = 'none';
@@ -2065,7 +2065,7 @@ function renderMyNFTsGrid() {
     const isSelected = APP.selectedNFTs.has(id);
     return `<div class="nft-card${isSelected ? ' selected' : ''}" onclick="toggleSelectNFT(${id},this)" style="cursor:pointer">
       <div class="nft-card-img" style="background:#e8e8f8;padding:0;overflow:hidden;position:relative">
-        <img src="https://tempomilady.xyz/pngs/${id}.png"
+        <img src="https://bafybeiasntwgwlqb3qrvjrt7gog3lvyqbtxxmfyfprfi6mg7sjytbwivpi.ipfs.w3s.link/${id}.png"
           style="width:100%;height:100%;object-fit:cover;display:block"
           onerror="this.style.display='none'" />
         <span class="select-check">✓</span>
@@ -2377,7 +2377,7 @@ async function loadActivity() {
         : Math.round(secsAgo / 86400) + 'd ago';
       const cls = ev.type === 'SALE' ? 'type-sale' : 'type-list';
       return `<tr>
-        <td><img src="https://tempomilady.xyz/pngs/${ev.tokenId}.png"
+        <td><img src="https://bafybeiasntwgwlqb3qrvjrt7gog3lvyqbtxxmfyfprfi6mg7sjytbwivpi.ipfs.w3s.link/${ev.tokenId}.png"
           style="width:28px;height:28px;object-fit:cover;vertical-align:middle;border:1px solid #ccc"
           onerror="this.style.display='none'" /></td>
         <td>Milady #${String(ev.tokenId).padStart(4,'0')}</td>
